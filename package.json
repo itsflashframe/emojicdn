@@ -1,0 +1,7 @@
+{
+  "name": "personal-emoji-cdn",
+  "version": "1.0.0",
+  "dependencies": {
+    "emoji-datasource-apple": "latest"
+  }
+}
