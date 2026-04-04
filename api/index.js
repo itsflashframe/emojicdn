@@ -2,9 +2,7 @@ const emojiData   = require('emoji-datasource-apple/emoji.json');
 const fluentEmoji = require('fluentui-emoji-js');
 const overrides   = require('./overrides');
 
-// MIT License — emoji-datasource: iamcal/emoji-data
-// MIT License — fluentui-emoji-js: ZacharyCrespin/fluentui-emoji-js
-// MIT License — fluentui-emoji npm: MKAbuMattar/fluentui-emoji
+
 
 const emojiMap     = {};
 const emojiMapNoFe = {};
