@@ -272,6 +272,16 @@ const overrides = {
     oneui:     '00a9',        whatsapp:  '00a9',
     fluent3d:  'copyright',   fluentflat: 'copyright', fluenthc: 'copyright',
   },
+  
+  '®': {
+    apple:     '00ae-fe0f',   google:    '00ae-fe0f',
+    facebook:  '00ae-fe0f',   twitter:   '00ae-fe0f',
+    messenger: '00ae-fe0f',
+    blobmoji:  'emoji_u00ae', emojitwo:  '00ae',
+    opencolor: '00AE',        openblack: '00AE',
+    oneui:     '00ae',        whatsapp:  '00ae',
+    fluent3d:  'registered',  fluentflat: 'registered', fluenthc: 'registered',
+  },
 
 };
 
