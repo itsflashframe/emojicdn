@@ -1,7 +1,7 @@
-const emojiData   = require('emoji-datasource-apple/emoji.json');
-const fluentEmoji = require('fluentui-emoji-js');
-const overrides   = require('./overrides');
-
+const emojiData     = require('emoji-datasource-apple/emoji.json');
+const fluentEmoji   = require('fluentui-emoji-js');
+const overrides     = require('./overrides');
+const sourceChanges = require('./sourcechange');
 
 
 const emojiMap     = {};
@@ -15,6 +15,7 @@ emojiData.forEach(e => {
   }
 });
 
+
 function resolveHex(emoji) {
   if (emojiMap[emoji])            return emojiMap[emoji];
   const noFe = emoji.replace(/\uFE0F/g, '');
@@ -26,6 +27,7 @@ function resolveHex(emoji) {
     .map(c => c.codePointAt(0).toString(16).toLowerCase())
     .join('-');
 }
+
 
 async function proxyImage(url, res) {
   try {
@@ -43,6 +45,31 @@ async function proxyImage(url, res) {
   }
 }
 
+
+function lookupSourceChange(hex, style, emoji) {
+  const hexNoFe = hex.replace(/-fe0f/g, '');
+  const keysToTry = [hex, hexNoFe, emoji].filter(Boolean);
+
+  for (const key of keysToTry) {
+    const entry = sourceChanges[key];
+    if (!entry) continue;
+
+    
+    if (typeof entry === 'string') return entry;
+
+    
+    if (typeof entry === 'object') {
+      const match = entry[style] ?? entry['*'];
+      if (!match) continue;
+
+      if (typeof match === 'function') return match(hex);
+      return match;
+    }
+  }
+
+  return null;
+}
+
 module.exports = async (req, res) => {
   let { emoji } = req.query;
   const style = (req.query.style || 'google').toLowerCase();
@@ -53,19 +80,29 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=31536000, stale-while-revalidate');
 
-  const ov = overrides[emoji];
+ 
+  const hexWithFe0f = resolveHex(emoji);
+  const hexNoFe0f   = hexWithFe0f.replace(/-fe0f/g, '');
 
+  const customUrl = lookupSourceChange(hexWithFe0f, style, emoji);
+  if (customUrl) {
+    const ok = await proxyImage(customUrl, res);
+    if (ok) return;
+   
+  }
+
+  
   if (['fluent3d', 'fluentflat', 'fluenthc'].includes(style)) {
     const folder      = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
     const fluentStyle = { fluent3d: '3D', fluentflat: 'Flat', fluenthc: 'High Contrast' }[style];
     const BASE        = `https://cdn.jsdelivr.net/npm/fluentui-emoji@1.3.0/icons/${folder}`;
+    const ov          = overrides[emoji];
 
     if (ov?.[style]) {
       const ok = await proxyImage(`${BASE}/${ov[style]}.svg`, res);
       if (ok) return;
     }
 
-    const hexNoFe0f = resolveHex(emoji).replace(/-fe0f/g, '');
     for (const h of [hexNoFe0f, hexNoFe0f.split('-')[0]]) {
       try {
         const filePath  = await fluentEmoji.fromCode(h, fluentStyle);
@@ -74,27 +111,30 @@ module.exports = async (req, res) => {
         if (ok) return;
       } catch (_) {}
     }
+
     return res.status(404).send(`Fluent emoji not found: ${hexNoFe0f}`);
   }
 
-  const hexWithFe0f = ov?.[style] || resolveHex(emoji);
-  const hexNoFe0f   = hexWithFe0f.replace(/-fe0f/g, '');
+  
+  const ov          = overrides[emoji];
+  const resolvedHex = ov?.[style] || hexWithFe0f;
+  const resolvedNoFe = resolvedHex.replace(/-fe0f/g, '');
 
   const sources = {
-    apple:     `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/img/apple/64/${hexWithFe0f}.png`,
-    google:    `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${hexWithFe0f}.png`,
-    facebook:  `https://cdn.jsdelivr.net/npm/emoji-datasource-facebook@latest/img/facebook/64/${hexWithFe0f}.png`,
-    twitter:   `https://cdn.jsdelivr.net/npm/emoji-datasource-twitter@latest/img/twitter/64/${hexWithFe0f}.png`,
-    messenger: `https://cdn.jsdelivr.net/npm/emoji-datasource-messenger@4.1.0/img/messenger/64/${hexWithFe0f}.png`,
-    blobmoji:  `https://cdn.jsdelivr.net/gh/DavidBerdik/blobmoji2@blobmoji-master/svg/${ov?.blobmoji || 'emoji_u' + hexNoFe0f.replace(/-/g, '_')}.svg`,
-    oneui:     `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/oneui/${hexNoFe0f}.png`,
-    whatsapp:  `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/whatsapp/${hexNoFe0f}.png`,
-    emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${hexNoFe0f}.png`,
-    opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || hexNoFe0f.toUpperCase()}.svg`,
-    openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || hexNoFe0f.toUpperCase()}.svg`,
+    apple:     `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/img/apple/128/${resolvedHex}.png`,
+    google:    `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/128/${resolvedHex}.png`,
+    facebook:  `https://cdn.jsdelivr.net/npm/emoji-datasource-facebook@latest/img/facebook/128/${resolvedHex}.png`,
+    twitter:   `https://cdn.jsdelivr.net/npm/emoji-datasource-twitter@latest/img/twitter/128/${resolvedHex}.png`,
+    messenger: `https://cdn.jsdelivr.net/npm/emoji-datasource-messenger@4.1.0/img/messenger/128/${resolvedHex}.png`,
+    blobmoji:  `https://cdn.jsdelivr.net/gh/DavidBerdik/blobmoji2@blobmoji-master/svg/${ov?.blobmoji || 'emoji_u' + resolvedNoFe.replace(/-/g, '_')}.svg`,
+    oneui:     `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/oneui/${resolvedNoFe}.png`,
+    whatsapp:  `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/whatsapp/${resolvedNoFe}.png`,
+    emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${resolvedNoFe}.png`,
+    opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || resolvedNoFe.toUpperCase()}.svg`,
+    openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || resolvedNoFe.toUpperCase()}.svg`,
   };
 
   const url = sources[style] || sources.google;
   const ok  = await proxyImage(url, res);
-  if (!ok) return res.status(404).send(`Emoji not found: ${hexWithFe0f}`);
+  if (!ok) return res.status(404).send(`Emoji not found: ${resolvedHex}`);
 };
