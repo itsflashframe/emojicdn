@@ -263,6 +263,15 @@ const overrides = {
     oneui:     '002a-20e3',      whatsapp:  '002a-20e3',
     fluent3d:  'keycap-asterisk', fluentflat: 'keycap-asterisk', fluenthc: 'keycap-asterisk',
   },
+   '©': {
+    apple:     '00a9-fe0f',   google:    '00a9-fe0f',
+    facebook:  '00a9-fe0f',   twitter:   '00a9-fe0f',
+    messenger: '00a9-fe0f',
+    blobmoji:  'emoji_u00a9', emojitwo:  '00a9',
+    opencolor: '00A9',        openblack: '00A9',
+    oneui:     '00a9',        whatsapp:  '00a9',
+    fluent3d:  'copyright',   fluentflat: 'copyright', fluenthc: 'copyright',
+  },
 
 };
 
