@@ -34,7 +34,6 @@
       gap: 48px;
     }
 
-    /* ── Hero ── */
     .hero {
       text-align: center;
       display: flex;
@@ -51,7 +50,98 @@
     }
     .hero a:hover { background: var(--surface2); border-color: var(--border2); }
 
-    /* ── Scanner card ── */
+    .search-section {
+      width: 100%; max-width: 900px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .search-section-hdr {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-section-hdr h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+    .search-section-hdr p  { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+
+    .search-body { padding: 20px 24px; }
+
+    .search-input-row {
+      display: flex; gap: 10px; margin-bottom: 16px;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 14px;
+      color: var(--text); font-size: 1rem;
+      outline: none; transition: border-color .15s;
+    }
+    .search-input:focus { border-color: var(--blue); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .search-style-toggles {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 20px;
+    }
+    .style-toggle {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 10px;
+      cursor: pointer; font-size: .8rem; user-select: none;
+      transition: border-color .15s, background .15s;
+    }
+    .style-toggle.active { border-color: var(--blue); background: rgba(88,166,255,.1); color: var(--blue); }
+    .style-toggle:hover   { border-color: var(--border2); }
+
+    .search-results-area {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .search-result-chip {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 6px;
+      cursor: pointer; transition: border-color .15s;
+      text-align: center; gap: 4px;
+    }
+    .search-result-chip:hover { border-color: var(--blue); }
+    .search-result-chip.selected { border-color: var(--blue); background: rgba(88,166,255,.08); }
+    .search-result-chip .chip-em  { font-size: 1.5rem; line-height: 1; }
+    .search-result-chip .chip-name { font-size: .65rem; color: var(--muted); word-break: break-word; }
+
+    .search-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px;
+    }
+    .preview-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      text-align: center;
+    }
+    .preview-card .pv-style { font-size: .72rem; color: var(--muted); font-weight: 600; }
+    .preview-card .pv-img-wrap {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .preview-card img {
+      width: 48px; height: 48px; object-fit: contain;
+      opacity: 0; transition: opacity .15s ease;
+    }
+    .preview-card img.loaded { opacity: 1; }
+    .preview-card .pv-native { font-size: 2rem; line-height: 1; }
+    .search-placeholder {
+      grid-column: 1/-1;
+      text-align: center; color: var(--muted);
+      font-size: .88rem; padding: 24px 0;
+    }
+
     .scanner {
       width: 100%; max-width: 900px;
       background: var(--surface);
@@ -69,16 +159,12 @@
     }
     .scanner-header:hover { background: var(--surface2); }
     .scanner-header h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
-    .scanner-header .chevron {
-      color: var(--muted); font-size: .85rem;
-      transition: transform .2s;
-    }
+    .scanner-header .chevron { color: var(--muted); font-size: .85rem; transition: transform .2s; }
     .scanner-header.open .chevron { transform: rotate(180deg); }
 
     .scanner-body { display: none; padding: 24px; }
     .scanner-body.open { display: block; }
 
-    /* ── Style selector grid ── */
     .style-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -96,7 +182,6 @@
     .style-check input { accent-color: var(--blue); cursor: pointer; }
     .style-check.checked { border-color: var(--blue); }
 
-    /* ── Options row ── */
     .options-row {
       display: flex; align-items: center; gap: 20px;
       flex-wrap: wrap;
@@ -106,7 +191,6 @@
     .options-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
     .options-row input[type=checkbox] { accent-color: var(--blue); }
 
-    /* ── Control row ── */
     .controls {
       display: flex; gap: 10px; flex-wrap: wrap;
       margin-bottom: 20px;
@@ -121,80 +205,41 @@
     .btn.primary:hover:not(:disabled) { background: #79b8ff; }
     .btn:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* ── Progress ── */
     .progress-wrap { margin-bottom: 16px; }
-    .progress-track {
-      height: 6px; background: var(--surface2); border-radius: 99px;
-      overflow: hidden; margin-bottom: 8px;
-    }
-    .progress-fill {
-      height: 100%; width: 0; border-radius: 99px;
-      background: linear-gradient(90deg, var(--blue), var(--purple));
-      transition: width .2s;
-    }
+    .progress-track { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+    .progress-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--purple)); transition: width .2s; }
     .progress-label { font-size: .82rem; color: var(--muted); min-height: 1.2em; }
 
-    /* ── Summary cards ── */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-    .summary-card {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 12px 14px;
-    }
-    .summary-card .sname { font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
-    .summary-card .scount {
-      font-size: 1.3rem; font-weight: 700;
-    }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; margin-bottom: 24px; }
+    .summary-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+    .summary-card .sname  { font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+    .summary-card .scount { font-size: 1.3rem; font-weight: 700; }
     .summary-card .scount.ok   { color: var(--green); }
     .summary-card .scount.warn { color: var(--yellow); }
     .summary-card .scount.bad  { color: var(--red); }
     .summary-card .stotal { font-size: .75rem; color: var(--muted); margin-top: 2px; }
 
-    /* ── Results accordion ── */
     .result-section { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
-    .result-section-hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; cursor: pointer; background: var(--surface2);
-      font-size: .9rem; font-weight: 600; user-select: none;
-    }
+    .result-section-hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; background: var(--surface2); font-size: .9rem; font-weight: 600; user-select: none; }
     .result-section-hdr:hover { background: #2a2f36; }
-    .result-section-hdr .badge {
-      background: var(--red); color: #fff; font-size: .72rem;
-      border-radius: 99px; padding: 1px 8px; font-weight: 700;
-    }
+    .result-section-hdr .badge { background: var(--red); color: #fff; font-size: .72rem; border-radius: 99px; padding: 1px 8px; font-weight: 700; }
     .result-section-hdr .badge.zero { background: var(--green); }
     .result-body { display: none; padding: 14px 16px; }
     .result-body.open { display: block; }
 
-    .missing-grid {
-      display: flex; flex-wrap: wrap; gap: 8px;
-    }
-    .missing-item {
-      display: flex; flex-direction: column; align-items: center;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 6px; padding: 8px 10px; min-width: 68px;
-      font-size: .72rem; color: var(--muted); text-align: center; gap: 4px;
-    }
-    .missing-item .em { font-size: 1.5rem; line-height: 1; }
+    .missing-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .missing-item { display: flex; flex-direction: column; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; min-width: 68px; font-size: .72rem; color: var(--muted); text-align: center; gap: 4px; }
+    .missing-item .em  { font-size: 1.5rem; line-height: 1; }
     .missing-item .hex { font-family: monospace; word-break: break-all; }
     .missing-item:hover { border-color: var(--red); }
+    .no-missing { font-size: .85rem; color: var(--green); padding: 6px 0; }
 
-    .no-missing {
-      font-size: .85rem; color: var(--green); padding: 6px 0;
-    }
-
-    /* ── Misc ── */
     .divider { width: 100%; max-width: 900px; border: none; border-top: 1px solid var(--border); }
     .note { font-size: .8rem; color: var(--muted); margin-top: -12px; }
   </style>
 </head>
 <body>
 
-  <!-- ═══ HERO ═══ -->
   <div class="hero">
     <h1>🫠 Emoji CDN</h1>
     <p>Fast, multi-source emoji images with automatic fallbacks.</p>
@@ -203,7 +248,27 @@
 
   <hr class="divider">
 
-  <!-- ═══ SCANNER ═══ -->
+  <div class="search-section">
+    <div class="search-section-hdr">
+      <h2>🔎 Emoji Style Search</h2>
+      <p>Paste an emoji or search by name — preview it across every style</p>
+    </div>
+    <div class="search-body">
+      <div class="search-input-row">
+        <input class="search-input" id="emojiSearchInput" type="text"
+               placeholder="Paste emoji (😊) or type a name like &quot;wave&quot;…"
+               autocomplete="off" spellcheck="false">
+      </div>
+      <div class="search-style-toggles" id="searchStyleToggles"></div>
+      <div class="search-results-area" id="searchResultsArea"></div>
+      <div class="search-preview-grid" id="searchPreviewGrid">
+        <div class="search-placeholder">Search for an emoji above to preview it in all styles.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
   <div class="scanner" id="scannerCard">
 
     <div class="scanner-header" id="scannerToggle" onclick="toggleScanner()">
@@ -220,10 +285,8 @@
         raw source gaps.
       </p>
 
-      <!-- Style checkboxes -->
       <div class="style-grid" id="styleGrid"></div>
 
-      <!-- Options -->
       <div class="options-row">
         <label>
           <input type="checkbox" id="chkSkinTones">
@@ -235,7 +298,6 @@
         </label>
       </div>
 
-      <!-- Controls -->
       <div class="controls">
         <button class="btn primary" id="btnScan"   onclick="startScan()">▶ Start Scan</button>
         <button class="btn"         id="btnStop"   onclick="stopScan()"    disabled>■ Stop</button>
@@ -243,51 +305,48 @@
         <button class="btn"         id="btnClear"  onclick="clearResults()" style="display:none">✕ Clear</button>
       </div>
 
-      <!-- Progress -->
       <div class="progress-wrap">
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
         <div class="progress-label" id="progressLabel">Select styles above and click Start Scan.</div>
       </div>
 
-      <!-- Summary -->
       <div class="summary-grid" id="summaryGrid"></div>
-
-      <!-- Per-style results -->
       <div id="resultsContainer"></div>
 
-    </div><!-- /scanner-body -->
-  </div><!-- /scanner -->
+    </div>
+  </div>
 
   <p class="note">Scanner tests primary CDN URLs directly from your browser. Fluent styles are skipped by default because their URLs are resolved server-side.</p>
 
 <script>
-// ════════════════════════════════════════════════════════════════
-//  CONFIG
-// ════════════════════════════════════════════════════════════════
+const CDN_BASE = 'https://emojiswapcdn.vercel.app/api/index';
 
-const STYLES = [
-  { id: 'apple',     label: 'Apple',        icon: '🍎' },
-  { id: 'google',    label: 'Google',        icon: '🔷' },
-  { id: 'facebook',  label: 'Facebook',      icon: '📘' },
-  { id: 'twitter',   label: 'Twitter/Twemoji', icon: '🐦' },
-  { id: 'messenger', label: 'Messenger',     icon: '💬' },
-  { id: 'blobmoji',  label: 'Blobmoji',      icon: '🟢' },
-  { id: 'oneui',     label: 'One UI (Samsung)', icon: '📱' },
-  { id: 'whatsapp',  label: 'WhatsApp',      icon: '📗' },
-  { id: 'emojitwo',  label: 'EmojiTwo',      icon: '2️⃣' },
-  { id: 'opencolor', label: 'OpenMoji Color', icon: '🎨' },
-  { id: 'openblack', label: 'OpenMoji B&W',  icon: '⬛' },
-  { id: 'fluent3d',  label: 'Fluent 3D',     icon: '🪟', fluent: true },
-  { id: 'fluentflat',label: 'Fluent Flat',   icon: '🪟', fluent: true },
-  { id: 'fluenthc',  label: 'Fluent H-C',    icon: '🪟', fluent: true },
+const ALL_STYLES = [
+  { id: 'apple',      label: 'Apple',            icon: '🍎' },
+  { id: 'google',     label: 'Google',            icon: '🔷' },
+  { id: 'facebook',   label: 'Facebook',          icon: '📘' },
+  { id: 'twitter',    label: 'Twitter/Twemoji',   icon: '🐦' },
+  { id: 'messenger',  label: 'Messenger',         icon: '💬' },
+  { id: 'blobmoji',   label: 'Blobmoji',          icon: '🟢' },
+  { id: 'oneui',      label: 'One UI (Samsung)',  icon: '📱' },
+  { id: 'whatsapp',   label: 'WhatsApp',          icon: '📗' },
+  { id: 'emojitwo',   label: 'EmojiTwo',          icon: '2️⃣' },
+  { id: 'opencolor',  label: 'OpenMoji Color',    icon: '🎨' },
+  { id: 'openblack',  label: 'OpenMoji B&W',      icon: '⬛' },
+  { id: 'tossface',   label: 'Tossface',          icon: '🫠' },
+  { id: 'fluent3d',   label: 'Fluent 3D',         icon: '🪟', fluent: true },
+  { id: 'fluentflat', label: 'Fluent Flat',       icon: '🪟', fluent: true },
+  { id: 'fluenthc',   label: 'Fluent H-C',        icon: '🪟', fluent: true },
 ];
 
-// Primary CDN URL builders (mirrors api/index.js logic – no overrides)
+function hexToChar(hex) {
+  return hex.split('-').map(h => String.fromCodePoint(parseInt(h, 16))).join('');
+}
+
 function primaryUrl(hex, style) {
   const noFe  = hex.replace(/-fe0f/g, '').toLowerCase();
   const lower = hex.toLowerCase();
   const upper = hex.toUpperCase();
-
   switch (style) {
     case 'apple':     return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/img/apple/64/${lower}.png`;
     case 'google':    return `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${lower}.png`;
@@ -300,53 +359,155 @@ function primaryUrl(hex, style) {
     case 'emojitwo':  return `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${noFe}.png`;
     case 'opencolor': return `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${upper}.svg`;
     case 'openblack': return `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${upper}.svg`;
-    // Fluent: server-resolved; tested via API endpoint
-    case 'fluent3d':   return `/api?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluent3d`;
-    case 'fluentflat': return `/api?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluentflat`;
-    case 'fluenthc':   return `/api?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluenthc`;
+    case 'tossface':  return `https://cdn.jsdelivr.net/npm/@toss/tossface@1.7.0/dist/svg/u${noFe.toUpperCase().replace(/-/g,'_')}.svg`;
+    case 'fluent3d':   return `${CDN_BASE}?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluent3d`;
+    case 'fluentflat': return `${CDN_BASE}?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluentflat`;
+    case 'fluenthc':   return `${CDN_BASE}?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluenthc`;
     default: return null;
   }
 }
 
-function hexToChar(hex) {
-  return hex.split('-').map(h => String.fromCodePoint(parseInt(h, 16))).join('');
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+
+let emojiDataCache    = null;
+let searchActiveStyles = new Set(ALL_STYLES.filter(s => !s.fluent).map(s => s.id));
+let searchDebounce    = null;
+const EMOJI_RE_SEARCH = /\p{Regional_Indicator}\p{Regional_Indicator}|\u{1F3F4}[\u{E0061}-\u{E007A}]+\u{E007F}|(?:\p{Emoji_Modifier_Base}\p{Emoji_Modifier}|\p{Emoji_Presentation}\uFE0F?|\p{Emoji}\uFE0F|(?![#*0-9])\p{Emoji}(?:\uFE0F)?|[\u{1F300}-\u{1FAFF}])(?:\u20E3)?(?:\u200D(?:\p{Emoji_Modifier_Base}\p{Emoji_Modifier}|\p{Emoji_Presentation}\uFE0F?|\p{Emoji}\uFE0F)(?:\u20E3)?)*/gu;
+
+(function buildSearchStyleToggles() {
+  const wrap = document.getElementById('searchStyleToggles');
+  ALL_STYLES.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'style-toggle' + (searchActiveStyles.has(s.id) ? ' active' : '');
+    btn.textContent = `${s.icon} ${s.label}`;
+    btn.dataset.id  = s.id;
+    btn.addEventListener('click', () => {
+      if (searchActiveStyles.has(s.id)) searchActiveStyles.delete(s.id);
+      else searchActiveStyles.add(s.id);
+      btn.classList.toggle('active', searchActiveStyles.has(s.id));
+      renderPreviewGrid(currentSearchEmoji);
+    });
+    wrap.appendChild(btn);
+  });
+})();
+
+let currentSearchEmoji = null;
+
+async function loadEmojiData() {
+  if (emojiDataCache) return emojiDataCache;
+  const r = await fetch('https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/emoji.json');
+  emojiDataCache = await r.json();
+  return emojiDataCache;
 }
 
+function renderPreviewGrid(emoji) {
+  currentSearchEmoji = emoji;
+  const grid = document.getElementById('searchPreviewGrid');
+  if (!emoji) {
+    grid.innerHTML = '<div class="search-placeholder">Search for an emoji above to preview it in all styles.</div>';
+    return;
+  }
+  grid.innerHTML = '';
 
-// ════════════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════════════
+  const nativeCard = document.createElement('div');
+  nativeCard.className = 'preview-card';
+  nativeCard.innerHTML = `<div class="pv-style">Native</div><div class="pv-img-wrap"><span class="pv-native">${emoji}</span></div>`;
+  grid.appendChild(nativeCard);
+
+  for (const s of ALL_STYLES) {
+    if (!searchActiveStyles.has(s.id)) continue;
+    const card = document.createElement('div');
+    card.className = 'preview-card';
+    const url = `${CDN_BASE}?emoji=${encodeURIComponent(emoji)}&style=${s.id}`;
+    card.innerHTML = `<div class="pv-style">${s.icon} ${s.label}</div><div class="pv-img-wrap"><img src="${url}" alt="${s.label}" loading="lazy"></div>`;
+    const img = card.querySelector('img');
+    img.addEventListener('load',  () => img.classList.add('loaded'));
+    img.addEventListener('error', () => { img.style.display='none'; card.querySelector('.pv-img-wrap').innerHTML = `<span class="pv-native">${emoji}</span>`; });
+    grid.appendChild(card);
+  }
+}
+
+async function handleSearchInput(val) {
+  const resultsArea = document.getElementById('searchResultsArea');
+  const raw = val.trim();
+  if (!raw) {
+    resultsArea.innerHTML = '';
+    renderPreviewGrid(null);
+    return;
+  }
+
+  EMOJI_RE_SEARCH.lastIndex = 0;
+  const emojiMatch = EMOJI_RE_SEARCH.exec(raw);
+  if (emojiMatch && emojiMatch[0].length >= raw.length - 1) {
+    resultsArea.innerHTML = '';
+    renderPreviewGrid(emojiMatch[0]);
+    return;
+  }
+
+  resultsArea.innerHTML = '<div class="search-placeholder" style="padding:10px 0">Loading emoji data…</div>';
+  const data = await loadEmojiData();
+  const query = raw.toLowerCase();
+  const matches = data.filter(e =>
+    (e.short_name || '').includes(query) ||
+    (e.name || '').toLowerCase().includes(query) ||
+    (e.short_names || []).some(n => n.includes(query))
+  ).slice(0, 40);
+
+  resultsArea.innerHTML = '';
+  if (!matches.length) {
+    resultsArea.innerHTML = '<div class="search-placeholder" style="padding:10px 0">No emoji found.</div>';
+    return;
+  }
+
+  for (const e of matches) {
+    const char = e.char || hexToChar(e.unified);
+    const chip = document.createElement('div');
+    chip.className = 'search-result-chip';
+    if (char === currentSearchEmoji) chip.classList.add('selected');
+    chip.innerHTML = `<span class="chip-em">${char}</span><span class="chip-name">${e.short_name}</span>`;
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.search-result-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      renderPreviewGrid(char);
+    });
+    resultsArea.appendChild(chip);
+  }
+
+  if (matches.length === 1) renderPreviewGrid(matches[0].char || hexToChar(matches[0].unified));
+}
+
+document.getElementById('emojiSearchInput').addEventListener('input', e => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => handleSearchInput(e.target.value), 200);
+});
+
+// ── SCANNER ───────────────────────────────────────────────────────────────────
+
+const STYLES = ALL_STYLES;
 
 let scanning       = false;
 let stopRequested  = false;
-let scanResults    = {};  // { styleId: { total, missing: [{hex, char, url}] } }
+let scanResults    = {};
 let emojiListCache = null;
 
-const CONCURRENCY = 30;  // parallel image tests per style
-
-
-// ════════════════════════════════════════════════════════════════
-//  UI INIT
-// ════════════════════════════════════════════════════════════════
+const CONCURRENCY  = 30;
 
 (function buildStyleGrid() {
-  const grid = document.getElementById('styleGrid');
+  const grid       = document.getElementById('styleGrid');
   const skipFluent = document.getElementById('chkSkipFluent');
 
   STYLES.forEach(s => {
     const lbl = document.createElement('label');
-    lbl.className = 'style-check';
+    lbl.className  = 'style-check';
     lbl.dataset.id = s.id;
 
     const chk = document.createElement('input');
     chk.type    = 'checkbox';
     chk.value   = s.id;
-    chk.checked = !s.fluent;   // Fluent unchecked by default
+    chk.checked = !s.fluent;
     chk.id      = 'chk_' + s.id;
 
-    chk.addEventListener('change', () => {
-      lbl.classList.toggle('checked', chk.checked);
-    });
+    chk.addEventListener('change', () => lbl.classList.toggle('checked', chk.checked));
     if (chk.checked) lbl.classList.add('checked');
 
     lbl.appendChild(chk);
@@ -354,7 +515,6 @@ const CONCURRENCY = 30;  // parallel image tests per style
     grid.appendChild(lbl);
   });
 
-  // Sync fluent checkboxes with the "skip fluent" toggle
   skipFluent.addEventListener('change', () => {
     STYLES.filter(s => s.fluent).forEach(s => {
       const chk = document.getElementById('chk_' + s.id);
@@ -362,11 +522,6 @@ const CONCURRENCY = 30;  // parallel image tests per style
     });
   });
 })();
-
-
-// ════════════════════════════════════════════════════════════════
-//  TOGGLE
-// ════════════════════════════════════════════════════════════════
 
 function toggleScanner() {
   const hdr  = document.getElementById('scannerToggle');
@@ -377,40 +532,25 @@ function toggleScanner() {
   chev.textContent = open ? '▲' : '▼';
 }
 
-
-// ════════════════════════════════════════════════════════════════
-//  EMOJI LIST LOADER
-// ════════════════════════════════════════════════════════════════
-
 async function loadEmojiList(includeSkin) {
   if (!emojiListCache) {
     setProgress(0, 0, 'Loading emoji list…');
-    const r    = await fetch('https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/emoji.json');
+    const r = await fetch('https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/emoji.json');
     emojiListCache = await r.json();
   }
-
   const list = [];
   for (const e of emojiListCache) {
     if (!e.unified) continue;
     list.push({ hex: e.unified, char: e.char || hexToChar(e.unified) });
-
     if (includeSkin && e.skin_variations) {
       for (const sv of Object.values(e.skin_variations)) {
         if (!sv.unified) continue;
-        list.push({
-          hex:  sv.unified,
-          char: sv.char || hexToChar(sv.unified),
-        });
+        list.push({ hex: sv.unified, char: sv.char || hexToChar(sv.unified) });
       }
     }
   }
   return list;
 }
-
-
-// ════════════════════════════════════════════════════════════════
-//  URL TESTER (Image-based, no CORS issues)
-// ════════════════════════════════════════════════════════════════
 
 function testImageUrl(url, timeoutMs = 10000) {
   return new Promise(resolve => {
@@ -431,34 +571,19 @@ async function runPool(tasks, concurrency, onDone) {
       onDone(idx);
     }
   }
-  const workers = Array.from({ length: concurrency }, worker);
-  await Promise.all(workers);
+  await Promise.all(Array.from({ length: concurrency }, worker));
 }
 
-
-// ════════════════════════════════════════════════════════════════
-//  SCAN
-// ════════════════════════════════════════════════════════════════
-
 async function startScan() {
-  const selectedIds = STYLES
-    .filter(s => document.getElementById('chk_' + s.id)?.checked)
-    .map(s => s.id);
+  const selectedIds = STYLES.filter(s => document.getElementById('chk_' + s.id)?.checked).map(s => s.id);
+  if (!selectedIds.length) { setProgress(0, 0, '⚠ Please select at least one style.'); return; }
 
-  if (!selectedIds.length) {
-    setProgress(0, 0, '⚠ Please select at least one style.');
-    return;
-  }
-
-  scanning      = true;
-  stopRequested = false;
-  scanResults   = {};
-
+  scanning = true; stopRequested = false; scanResults = {};
   document.getElementById('btnScan').disabled   = true;
   document.getElementById('btnStop').disabled   = false;
   document.getElementById('btnExport').disabled = true;
   document.getElementById('btnClear').style.display = 'none';
-  document.getElementById('summaryGrid').innerHTML     = '';
+  document.getElementById('summaryGrid').innerHTML      = '';
   document.getElementById('resultsContainer').innerHTML = '';
 
   const includeSkin = document.getElementById('chkSkinTones').checked;
@@ -467,47 +592,35 @@ async function startScan() {
 
   for (const styleId of selectedIds) {
     if (stopRequested) break;
-
     const styleMeta = STYLES.find(s => s.id === styleId);
     scanResults[styleId] = { total, missing: [] };
-
-    // Add a pending summary card
     renderSummaryCard(styleId, styleMeta, null, total);
     setProgress(0, total, `Scanning ${styleMeta.label}… 0 / ${total}`);
-
-    let done = 0;
 
     const tasks = emojis.map(e => async () => {
       const url = primaryUrl(e.hex, styleId);
       if (!url) return;
       const ok = await testImageUrl(url);
-      if (!ok) {
-        scanResults[styleId].missing.push({ hex: e.hex, char: e.char, url });
-      }
+      if (!ok) scanResults[styleId].missing.push({ hex: e.hex, char: e.char, url });
     });
 
     await runPool(tasks, CONCURRENCY, (n) => {
-      done = n;
-      setProgress(done, total, `Scanning ${styleMeta.label}… ${done} / ${total}`);
-      renderSummaryCard(styleId, styleMeta, null, total); // update in progress
+      setProgress(n, total, `Scanning ${styleMeta.label}… ${n} / ${total}`);
+      renderSummaryCard(styleId, styleMeta, null, total);
     });
 
     renderSummaryCard(styleId, styleMeta, scanResults[styleId].missing.length, total);
     renderResultSection(styleId, styleMeta, scanResults[styleId].missing);
   }
 
-  scanning = false;
-  stopRequested = false;
+  scanning = false; stopRequested = false;
   document.getElementById('btnScan').disabled   = false;
   document.getElementById('btnStop').disabled   = true;
   document.getElementById('btnExport').disabled = false;
   document.getElementById('btnClear').style.display = '';
 
   const total404 = Object.values(scanResults).reduce((s, r) => s + r.missing.length, 0);
-  setProgress(1, 1, stopRequested
-    ? `Scan stopped. ${total404} missing emoji found so far.`
-    : `✅ Scan complete. ${total404} missing emoji found across ${selectedIds.length} style(s).`
-  );
+  setProgress(1, 1, `✅ Scan complete. ${total404} missing emoji found across ${selectedIds.length} style(s).`);
 }
 
 function stopScan() {
@@ -525,11 +638,6 @@ function clearResults() {
   setProgress(0, 0, 'Select styles above and click Start Scan.');
 }
 
-
-// ════════════════════════════════════════════════════════════════
-//  RENDER HELPERS
-// ════════════════════════════════════════════════════════════════
-
 function setProgress(done, total, label) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
@@ -545,30 +653,20 @@ function renderSummaryCard(styleId, styleMeta, missingCount, total) {
     card.id = id;
     document.getElementById('summaryGrid').appendChild(card);
   }
-
   const inProgress = missingCount === null;
-  const pct  = inProgress ? '…' : missingCount;
-  const cls  = inProgress ? '' : missingCount === 0 ? 'ok' : missingCount < 20 ? 'warn' : 'bad';
-
-  card.innerHTML = `
-    <div class="sname">${styleMeta.icon} ${styleMeta.label}</div>
-    <div class="scount ${cls}">${pct} missing</div>
-    <div class="stotal">of ${total} emojis</div>
-  `;
+  const pct = inProgress ? '…' : missingCount;
+  const cls = inProgress ? '' : missingCount === 0 ? 'ok' : missingCount < 20 ? 'warn' : 'bad';
+  card.innerHTML = `<div class="sname">${styleMeta.icon} ${styleMeta.label}</div><div class="scount ${cls}">${pct} missing</div><div class="stotal">of ${total} emojis</div>`;
 }
 
 function renderResultSection(styleId, styleMeta, missing) {
   const container = document.getElementById('resultsContainer');
-
-  const section = document.createElement('div');
+  const section   = document.createElement('div');
   section.className = 'result-section';
 
   const hdr = document.createElement('div');
   hdr.className = 'result-section-hdr';
-  hdr.innerHTML = `
-    <span>${styleMeta.icon} ${styleMeta.label}</span>
-    <span class="badge ${missing.length === 0 ? 'zero' : ''}">${missing.length} missing</span>
-  `;
+  hdr.innerHTML = `<span>${styleMeta.icon} ${styleMeta.label}</span><span class="badge ${missing.length === 0 ? 'zero' : ''}">${missing.length} missing</span>`;
 
   const body = document.createElement('div');
   body.className = 'result-body';
@@ -582,20 +680,13 @@ function renderResultSection(styleId, styleMeta, missing) {
       const item = document.createElement('div');
       item.className = 'missing-item';
       item.title = m.url;
-      item.innerHTML = `
-        <span class="em">${m.char}</span>
-        <span class="hex">${m.hex.toLowerCase()}</span>
-      `;
+      item.innerHTML = `<span class="em">${m.char}</span><span class="hex">${m.hex.toLowerCase()}</span>`;
       grid.appendChild(item);
     }
     body.appendChild(grid);
   }
 
-  // Toggle body on header click
-  hdr.addEventListener('click', () => {
-    body.classList.toggle('open');
-  });
-  // Auto-open if there are missing emojis
+  hdr.addEventListener('click', () => body.classList.toggle('open'));
   if (missing.length > 0) body.classList.add('open');
 
   section.appendChild(hdr);
@@ -603,18 +694,10 @@ function renderResultSection(styleId, styleMeta, missing) {
   container.appendChild(section);
 }
 
-
-// ════════════════════════════════════════════════════════════════
-//  EXPORT
-// ════════════════════════════════════════════════════════════════
-
 function exportResults() {
   const out = {};
   for (const [styleId, data] of Object.entries(scanResults)) {
-    out[styleId] = {
-      total:   data.total,
-      missing: data.missing.map(m => ({ emoji: m.char, hex: m.hex, url: m.url })),
-    };
+    out[styleId] = { total: data.total, missing: data.missing.map(m => ({ emoji: m.char, hex: m.hex, url: m.url })) };
   }
   const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
   const a    = document.createElement('a');
