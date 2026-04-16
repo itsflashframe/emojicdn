@@ -3,7 +3,6 @@ const fluentEmoji   = require('fluentui-emoji-js');
 const overrides     = require('./overrides');
 const sourceChanges = require('./sourcechange');
 
-
 const emojiMap     = {};
 const emojiMapNoFe = {};
 
@@ -14,7 +13,6 @@ emojiData.forEach(e => {
     emojiMapNoFe[e.char.replace(/\uFE0F/g, '')] = unified;
   }
 });
-
 
 function resolveHex(emoji) {
   if (emojiMap[emoji])            return emojiMap[emoji];
@@ -27,7 +25,6 @@ function resolveHex(emoji) {
     .map(c => c.codePointAt(0).toString(16).toLowerCase())
     .join('-');
 }
-
 
 async function proxyImage(url, res) {
   try {
@@ -44,7 +41,6 @@ async function proxyImage(url, res) {
     return false;
   }
 }
-
 
 function lookupSourceChange(hex, style, emoji) {
   const hexNoFe = hex.replace(/-fe0f/g, '');
@@ -65,26 +61,14 @@ function lookupSourceChange(hex, style, emoji) {
   return null;
 }
 
-
-// ─── Fallback URL builders ────────────────────────────────────────────────────
-
-/**
- * 1st-tier fallback: emojicdn.elk.sh
- * elkStyle: apple | google | facebook | twitter | messenger | whatsapp
- */
 function elkFallbackUrl(emoji, elkStyle) {
   return `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=${elkStyle}`;
 }
 
-/**
- * 2nd-tier fallback: RealityRipple emoji mirror (universal fallback for all styles).
- * If RealityRipple changes their CDN path, update the template string here.
- */
 function realityRippleUrl(hexNoFe, rrStyle) {
   return `https://realityripple.com/Tools/Articles/Emoji/img/${rrStyle}/${hexNoFe}.png`;
 }
 
-// Maps each CDN style to its RealityRipple platform name
 const RR_STYLE = {
   apple:      'apple',
   google:     'google',
@@ -100,9 +84,9 @@ const RR_STYLE = {
   fluent3d:   'fluent',
   fluentflat: 'fluent',
   fluenthc:   'fluent',
+  tossface:   null,
 };
 
-// Maps each CDN style to emojicdn.elk.sh style name (null = not supported there)
 const ELK_STYLE = {
   apple:      'apple',
   google:     'google',
@@ -115,9 +99,9 @@ const ELK_STYLE = {
   emojitwo:   null,
   opencolor:  null,
   openblack:  null,
+  tossface:   null,
 };
 
-// Skin-tone modifier codepoint → label
 const SKIN_LABELS = {
   '1f3fb': 'light',
   '1f3fc': 'medium-light',
@@ -125,9 +109,6 @@ const SKIN_LABELS = {
   '1f3fe': 'medium-dark',
   '1f3ff': 'dark',
 };
-
-
-// ─── Main handler ─────────────────────────────────────────────────────────────
 
 module.exports = async (req, res) => {
   let { emoji } = req.query;
@@ -142,18 +123,12 @@ module.exports = async (req, res) => {
   const hexWithFe0f = resolveHex(emoji);
   const hexNoFe0f   = hexWithFe0f.replace(/-fe0f/g, '');
 
-  // ── Source-change overrides (brand-new / missing emojis with known URLs) ──
   const customUrl = lookupSourceChange(hexWithFe0f, style, emoji);
   if (customUrl) {
     const ok = await proxyImage(customUrl, res);
     if (ok) return;
-    // fall through if the custom URL itself is broken
   }
 
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // FLUENT STYLES  (fluent3d / fluentflat / fluenthc)
-  // ══════════════════════════════════════════════════════════════════════════
   if (['fluent3d', 'fluentflat', 'fluenthc'].includes(style)) {
     const folder      = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
     const fluentStyle = { fluent3d: '3D',     fluentflat: 'Flat', fluenthc: 'High Contrast' }[style];
@@ -161,75 +136,54 @@ module.exports = async (req, res) => {
     const GH_BASE     = `https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets`;
     const ov          = overrides[emoji];
 
-    // 1. Named override in overrides.js
     if (ov?.[style]) {
       if (await proxyImage(`${NPM_BASE}/${ov[style]}.svg`, res)) return;
     }
 
-    // Build a de-duped set of hex variants to try resolution with:
-    //   – exact hex (may include skin-tone modifier)
-    //   – skin-tone stripped (e.g. 1f44b-1f3ff → 1f44b)
-    //   – first codepoint only (catches ZWJ sequences whose base exists)
-    const skinStripped = hexNoFe0f.replace(/-1f3f[b-f]$/g, '');
+    const skinMatch    = hexNoFe0f.match(/-(1f3f[b-f])$/);
+    const skinStripped = hexNoFe0f.replace(/-1f3f[b-f]$/, '');
     const baseOnly     = hexNoFe0f.split('-')[0];
     const hexVariants  = [...new Set([hexNoFe0f, skinStripped, baseOnly])];
 
     for (const h of hexVariants) {
       try {
-        const filePath  = await fluentEmoji.fromCode(h, fluentStyle);
-        // filePath looks like "Grinning Face/3D/grinning_face_3d.svg"
-        //                  or "Waving Hand/3D/Color/waving_hand_light_3d.svg" for skin tones
-        const parts      = filePath.split('/').filter(Boolean);
-        const rawName    = parts[0];                                          // "Grinning Face"
-        const fileName   = parts[parts.length - 1];                          // "grinning_face_3d.svg"
-        const kebabName  = rawName.toLowerCase().replace(/\s+/g, '-');       // "grinning-face"
+        const filePath = await fluentEmoji.fromCode(h, fluentStyle);
+        const parts    = filePath.split('/').filter(Boolean);
+        const rawName  = parts[0];
+        const fileName = parts[parts.length - 1];
+        const kebabName = rawName.toLowerCase().replace(/\s+/g, '-');
 
-        // ── Attempt A: npm CDN – kebab-case (most emojis) ──────────────────
-        if (await proxyImage(`${NPM_BASE}/${kebabName}.svg`, res)) return;
+        const hasSkinTone = filePath.includes('/Color/');
 
-        // ── Attempt B: GitHub CDN – exact repo path from fromCode() ────────
+        if (!hasSkinTone) {
+          if (await proxyImage(`${NPM_BASE}/${kebabName}.svg`, res)) return;
+        }
+
         const ghPath = parts.slice(0, -1).map(encodeURIComponent).join('/');
         if (await proxyImage(`${GH_BASE}/${ghPath}/${encodeURIComponent(fileName)}`, res)) return;
 
-        // ── Attempt C: npm CDN with skin-tone label suffix ─────────────────
-        //    e.g. "waving-hand-dark.svg" for the dark skin variant
-        if (h !== hexNoFe0f) {
-          const skinMatch = hexNoFe0f.match(/-(1f3f[b-f])$/);
-          if (skinMatch) {
-            const skinLabel = SKIN_LABELS[skinMatch[1]];
-            if (skinLabel) {
-              if (await proxyImage(`${NPM_BASE}/${kebabName}-${skinLabel}.svg`, res)) return;
-              // Also try GitHub Color subfolder
-              const skinFile = `${rawName.toLowerCase().replace(/\s+/g, '_')}_${skinLabel.replace('-', '_')}_${fluentStyle.toLowerCase().replace(/\s+/g, '_')}.svg`;
-              if (await proxyImage(`${GH_BASE}/${encodeURIComponent(rawName)}/${encodeURIComponent(fluentStyle)}/Color/${skinFile}`, res)) return;
-            }
+        if (hasSkinTone && skinMatch) {
+          const skinLabel = SKIN_LABELS[skinMatch[1]];
+          if (skinLabel) {
+            if (await proxyImage(`${NPM_BASE}/${kebabName}-${skinLabel}.svg`, res)) return;
+            const skinFile = `${rawName.toLowerCase().replace(/\s+/g, '_')}_${skinLabel.replace('-', '_')}_${fluentStyle.toLowerCase().replace(/\s+/g, '_')}.svg`;
+            if (await proxyImage(`${GH_BASE}/${encodeURIComponent(rawName)}/${encodeURIComponent(fluentStyle)}/Color/${skinFile}`, res)) return;
           }
         }
 
-        // ── Attempt D: file name minus style suffix (underscore variant) ───
-        //    "grinning_face_3d.svg" → "grinning-face.svg" (already tried)
-        //    try the raw filename on npm CDN just in case
         const fileOnNpm = fileName.replace(/_/g, '-');
         if (fileOnNpm !== `${kebabName}.svg`) {
           if (await proxyImage(`${NPM_BASE}/${fileOnNpm}`, res)) return;
         }
 
-      } catch (_) {
-        // fromCode() throws for emojis it doesn't know – continue to next variant
-      }
+      } catch (_) {}
     }
 
-    // ── Fluent 2nd fallback: RealityRipple ──────────────────────────────────
     if (await proxyImage(realityRippleUrl(hexNoFe0f, 'fluent'), res)) return;
-
     return res.status(404).send(`Fluent emoji not found: ${hexNoFe0f}`);
   }
 
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // ALL OTHER STYLES
-  // ══════════════════════════════════════════════════════════════════════════
-  const ov          = overrides[emoji];
+  const ov           = overrides[emoji];
   const resolvedHex  = ov?.[style] || hexWithFe0f;
   const resolvedNoFe = resolvedHex.replace(/-fe0f/g, '');
 
@@ -245,19 +199,16 @@ module.exports = async (req, res) => {
     emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${resolvedHex}.png`,
     opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || resolvedHex.toUpperCase()}.svg`,
     openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || resolvedHex.toUpperCase()}.svg`,
+    tossface:  `https://cdn.jsdelivr.net/npm/@toss/tossface@1.7.0/dist/svg/u${resolvedNoFe.toUpperCase().replace(/-/g, '_')}.svg`,
   }[style] || `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`;
 
-  // ── Primary source ────────────────────────────────────────────────────────
   if (await proxyImage(primaryUrl, res)) return;
 
-  // ── 1st fallback: emojicdn.elk.sh (apple / google / facebook / twitter /
-  //                                   messenger / whatsapp only) ────────────
   const elkStyle = ELK_STYLE[style];
   if (elkStyle) {
     if (await proxyImage(elkFallbackUrl(emoji, elkStyle), res)) return;
   }
 
-  // ── 2nd fallback: RealityRipple (universal) ───────────────────────────────
   const rrStyle = RR_STYLE[style];
   if (rrStyle) {
     if (await proxyImage(realityRippleUrl(resolvedNoFe, rrStyle), res)) return;
