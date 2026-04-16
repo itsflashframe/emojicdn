@@ -29,6 +29,9 @@ function resolveHex(emoji) {
 }
 
 
+// Try to fetch a remote image and pipe it to res.
+// Returns true and sends the response on success, returns false (without
+// touching res) on any non-2xx status or network error.
 async function proxyImage(url, res) {
   try {
     const r = await fetch(url);
@@ -46,6 +49,64 @@ async function proxyImage(url, res) {
 }
 
 
+// ── Fallback chain ──────────────────────────────────────────────────────────
+//
+//  1. Primary source (passed in as `primaryUrl`)
+//  2. emojicdn.elk.sh  (https://github.com/benborgers/emojicdn)
+//  3. RealityRipple    (https://cdn.jsdelivr.net/gh/realityripple/emoji)
+//
+// Each mapping is null when the vendor simply has no equivalent set.
+
+const ELK_STYLE_MAP = {
+  apple:     'apple',
+  google:    'google',
+  facebook:  'facebook',
+  twitter:   'twitter',
+  messenger: 'facebook',   // closest available
+  blobmoji:  null,          // not in elk
+  oneui:     'samsung',
+  whatsapp:  'whatsapp',
+  emojitwo:  'openmoji',   // closest available
+  opencolor: 'openmoji',
+  openblack: null,          // not in elk
+};
+
+const RR_STYLE_MAP = {
+  apple:     'apple',
+  google:    'noto',        // Noto = Google's emoji font
+  facebook:  'facebook',
+  twitter:   'twemoji',
+  messenger: 'facebook',
+  blobmoji:  'blobmoji',
+  oneui:     'oneui',
+  whatsapp:  'whatsapp',
+  emojitwo:  'openmoji',   // closest available
+  opencolor: 'openmoji',
+  openblack: 'openmoji',   // closest available (no dedicated black set)
+};
+
+async function tryWithFallbacks(primaryUrl, style, emoji, resolvedNoFe, res) {
+  // 1. Primary source
+  if (await proxyImage(primaryUrl, res)) return true;
+
+  // 2. emojicdn.elk.sh fallback
+  const elkStyle = ELK_STYLE_MAP[style];
+  if (elkStyle) {
+    const elkUrl = `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=${elkStyle}`;
+    if (await proxyImage(elkUrl, res)) return true;
+  }
+
+  // 3. RealityRipple fallback
+  const rrFont = RR_STYLE_MAP[style];
+  if (rrFont) {
+    const rrUrl = `https://cdn.jsdelivr.net/gh/realityripple/emoji/${rrFont}/${resolvedNoFe}.png`;
+    if (await proxyImage(rrUrl, res)) return true;
+  }
+
+  return false;
+}
+
+
 function lookupSourceChange(hex, style, emoji) {
   const hexNoFe = hex.replace(/-fe0f/g, '');
   const keysToTry = [hex, hexNoFe, emoji].filter(Boolean);
@@ -53,10 +114,13 @@ function lookupSourceChange(hex, style, emoji) {
   for (const key of keysToTry) {
     const entry = sourceChanges[key];
     if (!entry) continue;
+
     if (typeof entry === 'string') return entry;
+
     if (typeof entry === 'object') {
       const match = entry[style] ?? entry['*'];
       if (!match) continue;
+
       if (typeof match === 'function') return match(hex);
       return match;
     }
@@ -64,60 +128,6 @@ function lookupSourceChange(hex, style, emoji) {
 
   return null;
 }
-
-
-function elkFallbackUrl(emoji, elkStyle) {
-  return `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=${elkStyle}`;
-}
-
-
-function realityRippleUrl(hexNoFe, rrStyle) {
-  return `https://realityripple.com/Tools/Articles/Emoji/img/${rrStyle}/${hexNoFe}.png`;
-}
-
-
-const RR_STYLE = {
-  apple:      'apple',
-  google:     'google',
-  facebook:   'facebook',
-  twitter:    'twitter',
-  messenger:  'messenger',
-  blobmoji:   'blob',
-  oneui:      'samsung',
-  whatsapp:   'whatsapp',
-  emojitwo:   'emojione',
-  opencolor:  'openmoji',
-  openblack:  'openmoji',
-  fluent3d:   'fluent',
-  fluentflat: 'fluent',
-  fluenthc:   'fluent',
-};
-
-
-const ELK_STYLE = {
-  apple:      'apple',
-  google:     'google',
-  facebook:   'facebook',
-  twitter:    'twitter',
-  messenger:  'messenger',
-  whatsapp:   'whatsapp',
-  blobmoji:   null,
-  oneui:      null,
-  emojitwo:   null,
-  opencolor:  null,
-  openblack:  null,
-};
-
-
-const SKIN_LABELS = {
-  '1f3fb': 'light',
-  '1f3fc': 'medium-light',
-  '1f3fd': 'medium',
-  '1f3fe': 'medium-dark',
-  '1f3ff': 'dark',
-};
-
-
 
 
 module.exports = async (req, res) => {
@@ -133,86 +143,64 @@ module.exports = async (req, res) => {
   const hexWithFe0f = resolveHex(emoji);
   const hexNoFe0f   = hexWithFe0f.replace(/-fe0f/g, '');
 
-  
+  // sourcechange override — also goes through the fallback chain
   const customUrl = lookupSourceChange(hexWithFe0f, style, emoji);
   if (customUrl) {
-    const ok = await proxyImage(customUrl, res);
+    const ok = await tryWithFallbacks(customUrl, style, emoji, hexNoFe0f, res);
     if (ok) return;
-   
+    // fall through to normal handling if the custom URL also failed
   }
 
 
- 
+  // ── Microsoft Fluent emoji ────────────────────────────────────────────────
+  //
+  // Fix: `fluentui-emoji-js` fromCode() returns a path relative to the
+  // `assets/` folder in microsoft/fluentui-emoji, e.g.:
+  //   /Waving Hand/Default/3D/waving_hand_3d.png
+  //
+  // We URL-encode each path segment (spaces → %20) and construct the
+  // jsDelivr GitHub CDN URL directly.  The previous approach (npm package
+  // icons/ folder) was incorrect and caused most Fluent emojis to 404.
+
   if (['fluent3d', 'fluentflat', 'fluenthc'].includes(style)) {
-    const folder      = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
-    const fluentStyle = { fluent3d: '3D',     fluentflat: 'Flat', fluenthc: 'High Contrast' }[style];
-    const NPM_BASE    = `https://cdn.jsdelivr.net/npm/fluentui-emoji@1.3.0/icons/${folder}`;
-    const ov          = overrides[emoji];
+    const fluentStyle = {
+      fluent3d:   '3D',
+      fluentflat: 'Flat',
+      fluenthc:   'High Contrast',
+    }[style];
 
-  
-    if (ov?.[style]) {
-      if (await proxyImage(`${NPM_BASE}/${ov[style]}.svg`, res)) return;
-    }
+    const BASE_GH = 'https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@latest/assets';
 
-
-    const skinStripped = hexNoFe0f.replace(/-1f3f[b-f]$/g, '');
-    const baseOnly     = hexNoFe0f.split('-')[0];
-    const hexVariants  = [...new Set([hexNoFe0f, skinStripped, baseOnly])];
-
-    for (const h of hexVariants) {
+    // Try the canonical hex first, then fall back to just the base codepoint
+    // (strips skin-tone modifiers and selectors).
+    for (const h of [hexNoFe0f, hexNoFe0f.split('-')[0]]) {
       try {
-        const filePath  = await fluentEmoji.fromCode(h, fluentStyle);
-     
-        const parts      = filePath.split('/').filter(Boolean);
-        const rawName    = parts[0];                                          
-        const fileName   = parts[parts.length - 1];                          
-        const kebabName  = rawName.toLowerCase().replace(/\s+/g, '-');       
+        const filePath    = await fluentEmoji.fromCode(h, fluentStyle);
+        // filePath begins with '/', e.g. "/Waving Hand/Default/3D/..."
+        // Encode each segment individually to handle spaces and special chars.
+        const encodedPath = filePath
+          .split('/')
+          .map(p => encodeURIComponent(p))
+          .join('/');
 
-     
-        if (await proxyImage(`${NPM_BASE}/${kebabName}.svg`, res)) return;
-
-        
-        const ghPath = parts.slice(0, -1).map(encodeURIComponent).join('/');
-        if (await proxyImage(`${GH_BASE}/${ghPath}/${encodeURIComponent(fileName)}`, res)) return;
-
-        
-        if (h !== hexNoFe0f) {
-          const skinMatch = hexNoFe0f.match(/-(1f3f[b-f])$/);
-          if (skinMatch) {
-            const skinLabel = SKIN_LABELS[skinMatch[1]];
-            if (skinLabel) {
-              if (await proxyImage(`${NPM_BASE}/${kebabName}-${skinLabel}.svg`, res)) return;
-             
-              const skinFile = `${rawName.toLowerCase().replace(/\s+/g, '_')}_${skinLabel.replace('-', '_')}_${fluentStyle.toLowerCase().replace(/\s+/g, '_')}.svg`;
-              if (await proxyImage(`${GH_BASE}/${encodeURIComponent(rawName)}/${encodeURIComponent(fluentStyle)}/Color/${skinFile}`, res)) return;
-            }
-          }
-        }
-
-       
-        const fileOnNpm = fileName.replace(/_/g, '-');
-        if (fileOnNpm !== `${kebabName}.svg`) {
-          if (await proxyImage(`${NPM_BASE}/${fileOnNpm}`, res)) return;
-        }
-
+        const ok = await proxyImage(`${BASE_GH}${encodedPath}`, res);
+        if (ok) return;
       } catch (_) {
-        
+        // fromCode() throws when the emoji isn't in its database — continue.
       }
     }
-
-    
-    if (await proxyImage(realityRippleUrl(hexNoFe0f, 'fluent'), res)) return;
 
     return res.status(404).send(`Fluent emoji not found: ${hexNoFe0f}`);
   }
 
 
+  // ── Standard raster/vector styles ────────────────────────────────────────
 
   const ov          = overrides[emoji];
-  const resolvedHex  = ov?.[style] || hexWithFe0f;
+  const resolvedHex = ov?.[style] || hexWithFe0f;
   const resolvedNoFe = resolvedHex.replace(/-fe0f/g, '');
 
-  const primaryUrl = {
+  const sources = {
     apple:     `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/img/apple/64/${resolvedHex}.png`,
     google:    `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`,
     facebook:  `https://cdn.jsdelivr.net/npm/emoji-datasource-facebook@latest/img/facebook/64/${resolvedHex}.png`,
@@ -224,22 +212,9 @@ module.exports = async (req, res) => {
     emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${resolvedNoFe}.png`,
     opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || resolvedHex.toUpperCase()}.svg`,
     openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || resolvedHex.toUpperCase()}.svg`,
-  }[style] || `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`;
+  };
 
-  
-  if (await proxyImage(primaryUrl, res)) return;
-
- 
-  const elkStyle = ELK_STYLE[style];
-  if (elkStyle) {
-    if (await proxyImage(elkFallbackUrl(emoji, elkStyle), res)) return;
-  }
-
-
-  const rrStyle = RR_STYLE[style];
-  if (rrStyle) {
-    if (await proxyImage(realityRippleUrl(resolvedNoFe, rrStyle), res)) return;
-  }
-
-  return res.status(404).send(`Emoji not found: ${resolvedHex}`);
+  const url = sources[style] || sources.google;
+  const ok  = await tryWithFallbacks(url, style, emoji, resolvedNoFe, res);
+  if (!ok) return res.status(404).send(`Emoji not found: ${resolvedHex}`);
 };
