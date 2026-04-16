@@ -147,7 +147,6 @@ module.exports = async (req, res) => {
     const folder      = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
     const fluentStyle = { fluent3d: '3D',     fluentflat: 'Flat', fluenthc: 'High Contrast' }[style];
     const NPM_BASE    = `https://cdn.jsdelivr.net/npm/fluentui-emoji@1.3.0/icons/${folder}`;
-    const GH_BASE     = `https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets`;
     const ov          = overrides[emoji];
 
   
