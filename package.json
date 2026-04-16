@@ -2,6 +2,7 @@
   "name": "personal-emoji-cdn",
   "version": "1.0.0",
   "dependencies": {
-    "emoji-datasource-apple": "latest"
+    "emoji-datasource-apple": "latest",
+    "fluentui-emoji-js": "latest"
   }
 }
