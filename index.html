@@ -2,16 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emoji CDN</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg:       #0d1117;
-      --bg2:      #161b22;
-      --bg3:      #1f2730;
+      --surface:  #161b22;
+      --surface2: #21262d;
       --border:   #30363d;
+      --border2:  #484f58;
       --text:     #c9d1d9;
       --muted:    #8b949e;
       --blue:     #58a6ff;
@@ -25,615 +26,603 @@
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      font-size: 14px;
       min-height: 100vh;
-    }
-
-    /* ── nav ── */
-    nav {
       display: flex;
-      gap: 4px;
-      padding: 12px 24px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg2);
-    }
-    nav button {
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 14px;
-      padding: 6px 14px;
-      transition: .15s;
-    }
-    nav button:hover  { color: var(--text); border-color: var(--border); }
-    nav button.active { color: var(--text); background: var(--bg3); border-color: var(--border); }
-
-    /* ── sections ── */
-    section { display: none; }
-    section.active { display: block; }
-
-    /* ── home page ── */
-    #home {
-      display: none;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 49px);
+      padding: 60px 20px 80px;
+      gap: 48px;
+    }
+
+    /* ── Hero ── */
+    .hero {
       text-align: center;
-    }
-    #home.active { display: flex; }
-    #home h1 { font-size: 2.8rem; margin-bottom: 10px; }
-    #home p  { font-size: 1.1rem; color: var(--muted); margin-bottom: 28px; }
-    #home a {
-      color: var(--blue);
-      text-decoration: none;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      padding: 11px 22px;
-      border-radius: 6px;
-      background: var(--bg2);
-      transition: .15s;
-    }
-    #home a:hover { background: var(--bg3); border-color: var(--muted); }
-
-    /* ── scanner page ── */
-    #scanner { padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
-    #scanner h2 { font-size: 1.5rem; margin-bottom: 6px; }
-    #scanner > p { color: var(--muted); margin-bottom: 22px; }
-
-    .card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 18px 20px;
-      margin-bottom: 18px;
-    }
-    .card h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; }
-
-    /* style checkboxes */
-    .style-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 8px;
-    }
-    .style-grid label {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 7px;
-      padding: 7px 10px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: .15s;
-      user-select: none;
+      gap: 14px;
     }
-    .style-grid label:hover { border-color: var(--muted); }
-    .style-grid input[type=checkbox] { accent-color: var(--blue); cursor: pointer; }
-
-    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
-    /* concurrency input */
-    label.inline { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
-    label.inline input[type=number] {
-      width: 58px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      color: var(--text);
-      font-size: 13px;
-      padding: 4px 7px;
+    .hero h1 { font-size: 2.4rem; font-weight: 700; }
+    .hero p   { color: var(--muted); font-size: 1.05rem; }
+    .hero a {
+      color: var(--blue); text-decoration: none; font-weight: 600;
+      border: 1px solid var(--border); padding: 10px 22px; border-radius: 6px;
+      background: var(--surface); transition: .15s;
     }
+    .hero a:hover { background: var(--surface2); border-color: var(--border2); }
 
-    /* buttons */
-    .btn {
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 18px;
-      transition: .15s;
-    }
-    .btn-primary  { background: #238636; color: #fff; }
-    .btn-primary:hover  { background: #2ea043; }
-    .btn-danger   { background: #b62324; color: #fff; }
-    .btn-danger:hover   { background: #d32f2f; }
-    .btn-ghost {
-      background: var(--bg3);
+    /* ── Scanner card ── */
+    .scanner {
+      width: 100%; max-width: 900px;
+      background: var(--surface);
       border: 1px solid var(--border);
-      color: var(--text);
-    }
-    .btn-ghost:hover { border-color: var(--muted); }
-    .btn:disabled { opacity: .45; cursor: not-allowed; }
-
-    /* progress */
-    #progress-wrap { margin-top: 16px; }
-    .progress-bar-outer {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      height: 10px;
+      border-radius: 10px;
       overflow: hidden;
     }
-    .progress-bar-inner {
-      background: var(--blue);
-      height: 100%;
-      width: 0%;
+
+    .scanner-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    .scanner-header:hover { background: var(--surface2); }
+    .scanner-header h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+    .scanner-header .chevron {
+      color: var(--muted); font-size: .85rem;
+      transition: transform .2s;
+    }
+    .scanner-header.open .chevron { transform: rotate(180deg); }
+
+    .scanner-body { display: none; padding: 24px; }
+    .scanner-body.open { display: block; }
+
+    /* ── Style selector grid ── */
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .style-check {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 12px;
+      cursor: pointer; font-size: .88rem;
+      transition: border-color .15s;
+    }
+    .style-check:hover { border-color: var(--border2); }
+    .style-check input { accent-color: var(--blue); cursor: pointer; }
+    .style-check.checked { border-color: var(--blue); }
+
+    /* ── Options row ── */
+    .options-row {
+      display: flex; align-items: center; gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      font-size: .88rem; color: var(--muted);
+    }
+    .options-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .options-row input[type=checkbox] { accent-color: var(--blue); }
+
+    /* ── Control row ── */
+    .controls {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .btn {
+      padding: 8px 18px; border-radius: 6px; border: 1px solid var(--border);
+      font-size: .9rem; cursor: pointer; font-weight: 500;
+      transition: .15s; background: var(--surface2); color: var(--text);
+    }
+    .btn:hover:not(:disabled) { border-color: var(--border2); }
+    .btn.primary { background: var(--blue); color: #000; border-color: var(--blue); }
+    .btn.primary:hover:not(:disabled) { background: #79b8ff; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-bottom: 16px; }
+    .progress-track {
+      height: 6px; background: var(--surface2); border-radius: 99px;
+      overflow: hidden; margin-bottom: 8px;
+    }
+    .progress-fill {
+      height: 100%; width: 0; border-radius: 99px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
       transition: width .2s;
-      border-radius: 999px;
     }
-    .progress-meta {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 7px;
-      font-size: 12px;
-      color: var(--muted);
+    .progress-label { font-size: .82rem; color: var(--muted); min-height: 1.2em; }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .summary-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    .summary-card .sname { font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+    .summary-card .scount {
+      font-size: 1.3rem; font-weight: 700;
+    }
+    .summary-card .scount.ok   { color: var(--green); }
+    .summary-card .scount.warn { color: var(--yellow); }
+    .summary-card .scount.bad  { color: var(--red); }
+    .summary-card .stotal { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Results accordion ── */
+    .result-section { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    .result-section-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; cursor: pointer; background: var(--surface2);
+      font-size: .9rem; font-weight: 600; user-select: none;
+    }
+    .result-section-hdr:hover { background: #2a2f36; }
+    .result-section-hdr .badge {
+      background: var(--red); color: #fff; font-size: .72rem;
+      border-radius: 99px; padding: 1px 8px; font-weight: 700;
+    }
+    .result-section-hdr .badge.zero { background: var(--green); }
+    .result-body { display: none; padding: 14px 16px; }
+    .result-body.open { display: block; }
+
+    .missing-grid {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .missing-item {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 10px; min-width: 68px;
+      font-size: .72rem; color: var(--muted); text-align: center; gap: 4px;
+    }
+    .missing-item .em { font-size: 1.5rem; line-height: 1; }
+    .missing-item .hex { font-family: monospace; word-break: break-all; }
+    .missing-item:hover { border-color: var(--red); }
+
+    .no-missing {
+      font-size: .85rem; color: var(--green); padding: 6px 0;
     }
 
-    /* stats row */
-    .stat-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
-    .stat {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 9px 14px;
-      text-align: center;
-      min-width: 90px;
-    }
-    .stat .val { font-size: 1.4rem; font-weight: 700; }
-    .stat .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .stat.red   .val { color: var(--red); }
-    .stat.green .val { color: var(--green); }
-    .stat.blue  .val { color: var(--blue); }
-
-    /* results table */
-    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead tr { background: var(--bg3); }
-    th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; cursor: pointer; white-space: nowrap; }
-    th:hover { color: var(--text); }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: var(--bg3); }
-
-    .emoji-cell { font-size: 1.5rem; }
-    .badge {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      background: #3b1c1c;
-      color: var(--red);
-      border: 1px solid #5a2020;
-    }
-    .badge-ok { background: #1a2e1a; color: var(--green); border-color: #1f4520; }
-
-    .style-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-
-    /* empty state */
-    .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
-    .empty .icon { font-size: 2.5rem; margin-bottom: 10px; }
-
-    /* filter bar */
-    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .filter-bar input[type=text] {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 13px;
-      padding: 6px 10px;
-      width: 220px;
-    }
-    .filter-bar input[type=text]::placeholder { color: var(--muted); }
-
-    /* toast */
-    #toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 18px;
-      font-size: 13px; opacity: 0;
-      transition: opacity .25s;
-      pointer-events: none;
-    }
-    #toast.show { opacity: 1; }
+    /* ── Misc ── */
+    .divider { width: 100%; max-width: 900px; border: none; border-top: 1px solid var(--border); }
+    .note { font-size: .8rem; color: var(--muted); margin-top: -12px; }
   </style>
 </head>
 <body>
 
-  <nav>
-    <button class="active" onclick="showTab('home', this)">🏠 Home</button>
-    <button onclick="showTab('scanner', this)">🔍 Scanner</button>
-  </nav>
+  <!-- ═══ HERO ═══ -->
+  <div class="hero">
+    <h1>🫠 Emoji CDN</h1>
+    <p>Fast, multi-source emoji images with automatic fallbacks.</p>
+    <a href="https://github.com/itsflashframe/emojicdn/tree/main">View Source on GitHub</a>
+  </div>
 
-  <!-- ── HOME ──────────────────────────────────────────────────────────── -->
-  <section id="home" class="active">
-    <div class="container">
-      <h1>🫠 Emoji CDN</h1>
-      <p>Well nothing else except. GitHub Repo over here &mdash;></p>
-      <a href="https://github.com/itsflashframe/emojicdn/tree/main">View Source on GitHub</a>
-    </div>
-  </section>
+  <hr class="divider">
 
-  <!-- ── SCANNER ────────────────────────────────────────────────────────── -->
-  <section id="scanner">
-    <h2>🔍 Emoji 404 Scanner</h2>
-    <p>Scans every emoji in the database against selected styles. Reports anything that returns 404 even after all fallbacks.</p>
+  <!-- ═══ SCANNER ═══ -->
+  <div class="scanner" id="scannerCard">
 
-    <!-- Style picker -->
-    <div class="card">
-      <h3>Styles to scan</h3>
-      <div class="style-grid" id="styleGrid">
-        <!-- filled by JS -->
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <button class="btn btn-ghost" onclick="selectAll(true)">All</button>
-        <button class="btn btn-ghost" onclick="selectAll(false)">None</button>
-      </div>
+    <div class="scanner-header" id="scannerToggle" onclick="toggleScanner()">
+      <h2>🔍 404 Scanner <span style="font-weight:400;color:var(--muted);font-size:.85rem">— find missing emojis per style</span></h2>
+      <span class="chevron" id="chevron">▼</span>
     </div>
 
-    <!-- Controls -->
-    <div class="card">
-      <h3>Options</h3>
-      <div class="row">
-        <label class="inline">
-          Concurrency
-          <input type="number" id="concurrency" value="15" min="1" max="50">
+    <div class="scanner-body" id="scannerBody">
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">
+        Tests every emoji against the <strong>primary CDN source</strong> for each style. 404s mean
+        the source is missing that emoji — add it to <code>overrides.js</code> or <code>sourcechange.js</code>
+        to fix it. Fallbacks (elk.sh / RealityRipple) are <em>not</em> tested here, so results show
+        raw source gaps.
+      </p>
+
+      <!-- Style checkboxes -->
+      <div class="style-grid" id="styleGrid"></div>
+
+      <!-- Options -->
+      <div class="options-row">
+        <label>
+          <input type="checkbox" id="chkSkinTones">
+          Include skin-tone variants
         </label>
-        <button class="btn btn-primary" id="startBtn" onclick="startScan()">▶ Start Scan</button>
-        <button class="btn btn-danger"  id="stopBtn"  onclick="stopScan()" style="display:none">⏹ Stop</button>
+        <label>
+          <input type="checkbox" id="chkSkipFluent" checked>
+          Skip Fluent styles <span style="font-size:.78rem">(server-resolved, slow to scan)</span>
+        </label>
       </div>
 
-      <div id="progress-wrap" style="display:none">
-        <div class="progress-bar-outer" style="margin-top:14px;">
-          <div class="progress-bar-inner" id="progressBar"></div>
-        </div>
-        <div class="progress-meta">
-          <span id="progressText">Preparing…</span>
-          <span id="progressEta"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Results -->
-    <div class="card" id="resultsCard" style="display:none">
-      <h3>Results</h3>
-
-      <div class="stat-row" id="statsRow"></div>
-
-      <div class="filter-bar">
-        <input type="text" id="filterInput" placeholder="Filter by name or hex…" oninput="renderTable()">
-        <button class="btn btn-ghost" onclick="exportJSON()">⬇ Export JSON</button>
-        <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+      <!-- Controls -->
+      <div class="controls">
+        <button class="btn primary" id="btnScan"   onclick="startScan()">▶ Start Scan</button>
+        <button class="btn"         id="btnStop"   onclick="stopScan()"    disabled>■ Stop</button>
+        <button class="btn"         id="btnExport" onclick="exportResults()" disabled>⬇ Export JSON</button>
+        <button class="btn"         id="btnClear"  onclick="clearResults()" style="display:none">✕ Clear</button>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th onclick="sortBy('emoji')">Emoji</th>
-              <th onclick="sortBy('name')">Name</th>
-              <th onclick="sortBy('hex')">Hex</th>
-              <th onclick="sortBy('category')">Category</th>
-              <th>Missing styles</th>
-            </tr>
-          </thead>
-          <tbody id="resultsBody"></tbody>
-        </table>
+      <!-- Progress -->
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Select styles above and click Start Scan.</div>
       </div>
-      <div id="tableEmpty" class="empty" style="display:none">
-        <div class="icon">✅</div>
-        <div>No emojis match your filter.</div>
-      </div>
-    </div>
-  </section>
 
-  <div id="toast"></div>
+      <!-- Summary -->
+      <div class="summary-grid" id="summaryGrid"></div>
 
-  <script>
-  // ────────────────────────────────────────────────────────────────────────
-  //  Config
-  // ────────────────────────────────────────────────────────────────────────
-  const ALL_STYLES = [
-    { id: 'apple',     label: '🍎 Apple' },
-    { id: 'google',    label: '🔵 Google' },
-    { id: 'facebook',  label: '📘 Facebook' },
-    { id: 'twitter',   label: '🐦 Twitter' },
-    { id: 'messenger', label: '💬 Messenger' },
-    { id: 'blobmoji',  label: '🟢 Blobmoji' },
-    { id: 'oneui',     label: '🌸 OneUI' },
-    { id: 'whatsapp',  label: '📗 WhatsApp' },
-    { id: 'emojitwo',  label: '2️⃣  EmojiTwo' },
-    { id: 'opencolor', label: '🎨 OpenMoji Color' },
-    { id: 'openblack', label: '⬛ OpenMoji Black' },
-    { id: 'fluent3d',  label: '🪟 Fluent 3D' },
-    { id: 'fluentflat',label: '🟦 Fluent Flat' },
-    { id: 'fluenthc',  label: '🔲 Fluent HC' },
-  ];
+      <!-- Per-style results -->
+      <div id="resultsContainer"></div>
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  Tab switching
-  // ────────────────────────────────────────────────────────────────────────
-  function showTab(id, btn) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    btn.classList.add('active');
+    </div><!-- /scanner-body -->
+  </div><!-- /scanner -->
+
+  <p class="note">Scanner tests primary CDN URLs directly from your browser. Fluent styles are skipped by default because their URLs are resolved server-side.</p>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════════════
+
+const STYLES = [
+  { id: 'apple',     label: 'Apple',        icon: '🍎' },
+  { id: 'google',    label: 'Google',        icon: '🔷' },
+  { id: 'facebook',  label: 'Facebook',      icon: '📘' },
+  { id: 'twitter',   label: 'Twitter/Twemoji', icon: '🐦' },
+  { id: 'messenger', label: 'Messenger',     icon: '💬' },
+  { id: 'blobmoji',  label: 'Blobmoji',      icon: '🟢' },
+  { id: 'oneui',     label: 'One UI (Samsung)', icon: '📱' },
+  { id: 'whatsapp',  label: 'WhatsApp',      icon: '📗' },
+  { id: 'emojitwo',  label: 'EmojiTwo',      icon: '2️⃣' },
+  { id: 'opencolor', label: 'OpenMoji Color', icon: '🎨' },
+  { id: 'openblack', label: 'OpenMoji B&W',  icon: '⬛' },
+  { id: 'fluent3d',  label: 'Fluent 3D',     icon: '🪟', fluent: true },
+  { id: 'fluentflat',label: 'Fluent Flat',   icon: '🪟', fluent: true },
+  { id: 'fluenthc',  label: 'Fluent H-C',    icon: '🪟', fluent: true },
+];
+
+// Primary CDN URL builders (mirrors api/index.js logic – no overrides)
+function primaryUrl(hex, style) {
+  const noFe  = hex.replace(/-fe0f/g, '').toLowerCase();
+  const lower = hex.toLowerCase();
+  const upper = hex.toUpperCase();
+
+  switch (style) {
+    case 'apple':     return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/img/apple/64/${lower}.png`;
+    case 'google':    return `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${lower}.png`;
+    case 'facebook':  return `https://cdn.jsdelivr.net/npm/emoji-datasource-facebook@latest/img/facebook/64/${lower}.png`;
+    case 'twitter':   return `https://cdn.jsdelivr.net/npm/emoji-datasource-twitter@latest/img/twitter/64/${lower}.png`;
+    case 'messenger': return `https://cdn.jsdelivr.net/npm/emoji-datasource-messenger@4.1.0/img/messenger/64/${lower}.png`;
+    case 'blobmoji':  return `https://cdn.jsdelivr.net/gh/DavidBerdik/blobmoji2@blobmoji-master/svg/emoji_u${noFe.replace(/-/g,'_')}.svg`;
+    case 'oneui':     return `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/oneui/${noFe}.png`;
+    case 'whatsapp':  return `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/whatsapp/${noFe}.png`;
+    case 'emojitwo':  return `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${noFe}.png`;
+    case 'opencolor': return `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${upper}.svg`;
+    case 'openblack': return `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${upper}.svg`;
+    // Fluent: server-resolved; tested via API endpoint
+    case 'fluent3d':   return `/api?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluent3d`;
+    case 'fluentflat': return `/api?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluentflat`;
+    case 'fluenthc':   return `/api?emoji=${encodeURIComponent(hexToChar(hex))}&style=fluenthc`;
+    default: return null;
   }
+}
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  Build style checkboxes
-  // ────────────────────────────────────────────────────────────────────────
+function hexToChar(hex) {
+  return hex.split('-').map(h => String.fromCodePoint(parseInt(h, 16))).join('');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════
+
+let scanning       = false;
+let stopRequested  = false;
+let scanResults    = {};  // { styleId: { total, missing: [{hex, char, url}] } }
+let emojiListCache = null;
+
+const CONCURRENCY = 30;  // parallel image tests per style
+
+
+// ════════════════════════════════════════════════════════════════
+//  UI INIT
+// ════════════════════════════════════════════════════════════════
+
+(function buildStyleGrid() {
   const grid = document.getElementById('styleGrid');
-  ALL_STYLES.forEach(s => {
+  const skipFluent = document.getElementById('chkSkipFluent');
+
+  STYLES.forEach(s => {
     const lbl = document.createElement('label');
-    lbl.innerHTML = `<input type="checkbox" value="${s.id}" checked> ${s.label}`;
+    lbl.className = 'style-check';
+    lbl.dataset.id = s.id;
+
+    const chk = document.createElement('input');
+    chk.type    = 'checkbox';
+    chk.value   = s.id;
+    chk.checked = !s.fluent;   // Fluent unchecked by default
+    chk.id      = 'chk_' + s.id;
+
+    chk.addEventListener('change', () => {
+      lbl.classList.toggle('checked', chk.checked);
+    });
+    if (chk.checked) lbl.classList.add('checked');
+
+    lbl.appendChild(chk);
+    lbl.appendChild(document.createTextNode(` ${s.icon} ${s.label}`));
     grid.appendChild(lbl);
   });
 
-  function selectedStyles() {
-    return [...document.querySelectorAll('#styleGrid input:checked')].map(i => i.value);
+  // Sync fluent checkboxes with the "skip fluent" toggle
+  skipFluent.addEventListener('change', () => {
+    STYLES.filter(s => s.fluent).forEach(s => {
+      const chk = document.getElementById('chk_' + s.id);
+      if (chk) chk.checked = !skipFluent.checked;
+    });
+  });
+})();
+
+
+// ════════════════════════════════════════════════════════════════
+//  TOGGLE
+// ════════════════════════════════════════════════════════════════
+
+function toggleScanner() {
+  const hdr  = document.getElementById('scannerToggle');
+  const body = document.getElementById('scannerBody');
+  const chev = document.getElementById('chevron');
+  const open = body.classList.toggle('open');
+  hdr.classList.toggle('open', open);
+  chev.textContent = open ? '▲' : '▼';
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  EMOJI LIST LOADER
+// ════════════════════════════════════════════════════════════════
+
+async function loadEmojiList(includeSkin) {
+  if (!emojiListCache) {
+    setProgress(0, 0, 'Loading emoji list…');
+    const r    = await fetch('https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/emoji.json');
+    emojiListCache = await r.json();
   }
-  function selectAll(checked) {
-    document.querySelectorAll('#styleGrid input').forEach(i => i.checked = checked);
-  }
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  State
-  // ────────────────────────────────────────────────────────────────────────
-  let scanAbort    = false;
-  let allResults   = [];   // [{emoji, name, hex, category, missing:[styles]}]
-  let sortKey      = 'name';
-  let sortDir      = 1;
-  let scanStart    = 0;
-  let totalJobs    = 0;
-  let doneJobs     = 0;
+  const list = [];
+  for (const e of emojiListCache) {
+    if (!e.unified) continue;
+    list.push({ hex: e.unified, char: e.char || hexToChar(e.unified) });
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  Scan
-  // ────────────────────────────────────────────────────────────────────────
-  async function startScan() {
-    const styles = selectedStyles();
-    if (!styles.length) { toast('Pick at least one style.'); return; }
-
-    scanAbort = false;
-    allResults = [];
-    doneJobs = 0;
-
-    document.getElementById('startBtn').disabled = true;
-    document.getElementById('stopBtn').style.display = '';
-    document.getElementById('progress-wrap').style.display = '';
-    document.getElementById('resultsCard').style.display = 'none';
-    setProgress(0, 1, 'Loading emoji data…');
-
-    // Load emoji datasource
-    let emojiList;
-    try {
-      const r = await fetch('https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/emoji.json');
-      emojiList = (await r.json()).filter(e => e.char);
-    } catch (err) {
-      toast('Failed to load emoji data: ' + err.message);
-      resetControls();
-      return;
-    }
-
-    totalJobs = emojiList.length * styles.length;
-    scanStart = Date.now();
-    setProgress(0, totalJobs, `Scanning 0 / ${totalJobs}…`);
-
-    // Map for quick result lookup: unified → result entry
-    const resultMap = {};
-
-    const concurrency = Math.max(1, Math.min(50, +document.getElementById('concurrency').value || 15));
-
-    // Process all (emoji × style) jobs with limited concurrency
-    const queue = [];
-    for (const e of emojiList) {
-      for (const style of styles) {
-        queue.push({ e, style });
+    if (includeSkin && e.skin_variations) {
+      for (const sv of Object.values(e.skin_variations)) {
+        if (!sv.unified) continue;
+        list.push({
+          hex:  sv.unified,
+          char: sv.char || hexToChar(sv.unified),
+        });
       }
     }
+  }
+  return list;
+}
 
-    // Work through queue with a concurrency pool
-    let qi = 0;
-    async function worker() {
-      while (qi < queue.length && !scanAbort) {
-        const { e, style } = queue[qi++];
-        const url = `/api/index?emoji=${encodeURIComponent(e.char)}&style=${style}`;
-        let ok = false;
-        try {
-          const r = await fetch(url, { method: 'HEAD' });
-          ok = r.ok;
-        } catch (_) { ok = false; }
 
-        if (!ok) {
-          const key = e.unified;
-          if (!resultMap[key]) {
-            resultMap[key] = {
-              emoji:    e.char,
-              name:     e.name || e.short_name || e.unified,
-              hex:      e.unified.toLowerCase(),
-              category: e.category || '—',
-              missing:  [],
-            };
-            allResults.push(resultMap[key]);
-          }
-          resultMap[key].missing.push(style);
-        }
+// ════════════════════════════════════════════════════════════════
+//  URL TESTER (Image-based, no CORS issues)
+// ════════════════════════════════════════════════════════════════
 
-        doneJobs++;
-        // Update UI every 20 completions to avoid layout thrash
-        if (doneJobs % 20 === 0 || doneJobs === totalJobs) {
-          const elapsed = (Date.now() - scanStart) / 1000;
-          const rate    = doneJobs / elapsed;
-          const etaSec  = rate > 0 ? Math.round((totalJobs - doneJobs) / rate) : 0;
-          setProgress(doneJobs, totalJobs,
-            `Scanning ${doneJobs.toLocaleString()} / ${totalJobs.toLocaleString()}  ·  ${allResults.length} missing`,
-            formatEta(etaSec));
-          // Yield to browser
-          await yieldToMain();
-        }
-      }
+function testImageUrl(url, timeoutMs = 10000) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const tid = setTimeout(() => { img.src = ''; resolve(false); }, timeoutMs);
+    img.onload  = () => { clearTimeout(tid); resolve(true);  };
+    img.onerror = () => { clearTimeout(tid); resolve(false); };
+    img.src = url;
+  });
+}
+
+async function runPool(tasks, concurrency, onDone) {
+  let idx = 0;
+  async function worker() {
+    while (idx < tasks.length && !stopRequested) {
+      const task = tasks[idx++];
+      await task();
+      onDone(idx);
     }
+  }
+  const workers = Array.from({ length: concurrency }, worker);
+  await Promise.all(workers);
+}
 
-    // Launch pool
-    const workers = Array.from({ length: concurrency }, () => worker());
-    await Promise.all(workers);
 
-    resetControls();
-    showResults(styles);
+// ════════════════════════════════════════════════════════════════
+//  SCAN
+// ════════════════════════════════════════════════════════════════
+
+async function startScan() {
+  const selectedIds = STYLES
+    .filter(s => document.getElementById('chk_' + s.id)?.checked)
+    .map(s => s.id);
+
+  if (!selectedIds.length) {
+    setProgress(0, 0, '⚠ Please select at least one style.');
+    return;
   }
 
-  function stopScan() {
-    scanAbort = true;
-    resetControls();
-    if (allResults.length) showResults(selectedStyles());
-    toast('Scan stopped.');
-  }
+  scanning      = true;
+  stopRequested = false;
+  scanResults   = {};
 
-  function resetControls() {
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').style.display = 'none';
-  }
+  document.getElementById('btnScan').disabled   = true;
+  document.getElementById('btnStop').disabled   = false;
+  document.getElementById('btnExport').disabled = true;
+  document.getElementById('btnClear').style.display = 'none';
+  document.getElementById('summaryGrid').innerHTML     = '';
+  document.getElementById('resultsContainer').innerHTML = '';
 
-  function yieldToMain() {
-    return new Promise(r => setTimeout(r, 0));
-  }
+  const includeSkin = document.getElementById('chkSkinTones').checked;
+  const emojis      = await loadEmojiList(includeSkin);
+  const total       = emojis.length;
 
-  function formatEta(sec) {
-    if (sec <= 0) return '';
-    if (sec < 60)  return `~${sec}s left`;
-    return `~${Math.round(sec/60)}m left`;
-  }
+  for (const styleId of selectedIds) {
+    if (stopRequested) break;
 
-  function setProgress(done, total, label, eta) {
-    const pct = total > 0 ? (done / total * 100).toFixed(1) : 0;
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('progressText').textContent = label || '';
-    document.getElementById('progressEta').textContent = eta || '';
-  }
+    const styleMeta = STYLES.find(s => s.id === styleId);
+    scanResults[styleId] = { total, missing: [] };
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  Results display
-  // ────────────────────────────────────────────────────────────────────────
-  function showResults(scannedStyles) {
-    const card = document.getElementById('resultsCard');
-    card.style.display = '';
+    // Add a pending summary card
+    renderSummaryCard(styleId, styleMeta, null, total);
+    setProgress(0, total, `Scanning ${styleMeta.label}… 0 / ${total}`);
 
-    // Stats
-    const statsRow = document.getElementById('statsRow');
-    statsRow.innerHTML = `
-      <div class="stat blue"><div class="val">${totalJobs.toLocaleString()}</div><div class="lbl">Combos tested</div></div>
-      <div class="stat red"><div class="val">${allResults.length}</div><div class="lbl">Emojis with 404s</div></div>
-      <div class="stat green"><div class="val">${(totalJobs - allResults.reduce((a,r)=>a+r.missing.length,0)).toLocaleString()}</div><div class="lbl">OK responses</div></div>
-      <div class="stat"><div class="val">${scannedStyles.length}</div><div class="lbl">Styles scanned</div></div>
-    `;
+    let done = 0;
 
-    renderTable();
-  }
-
-  function renderTable() {
-    const q = document.getElementById('filterInput').value.toLowerCase();
-    let rows = allResults.filter(r =>
-      !q || r.name.toLowerCase().includes(q) || r.hex.includes(q) || r.emoji.includes(q)
-    );
-
-    // Sort
-    rows.sort((a, b) => {
-      let av = a[sortKey], bv = b[sortKey];
-      if (sortKey === 'missing') { av = a.missing.length; bv = b.missing.length; }
-      if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
-      return (av - bv) * sortDir;
+    const tasks = emojis.map(e => async () => {
+      const url = primaryUrl(e.hex, styleId);
+      if (!url) return;
+      const ok = await testImageUrl(url);
+      if (!ok) {
+        scanResults[styleId].missing.push({ hex: e.hex, char: e.char, url });
+      }
     });
 
-    const tbody = document.getElementById('resultsBody');
-    const empty = document.getElementById('tableEmpty');
+    await runPool(tasks, CONCURRENCY, (n) => {
+      done = n;
+      setProgress(done, total, `Scanning ${styleMeta.label}… ${done} / ${total}`);
+      renderSummaryCard(styleId, styleMeta, null, total); // update in progress
+    });
 
-    if (!rows.length) {
-      tbody.innerHTML = '';
-      empty.style.display = '';
-      return;
+    renderSummaryCard(styleId, styleMeta, scanResults[styleId].missing.length, total);
+    renderResultSection(styleId, styleMeta, scanResults[styleId].missing);
+  }
+
+  scanning = false;
+  stopRequested = false;
+  document.getElementById('btnScan').disabled   = false;
+  document.getElementById('btnStop').disabled   = true;
+  document.getElementById('btnExport').disabled = false;
+  document.getElementById('btnClear').style.display = '';
+
+  const total404 = Object.values(scanResults).reduce((s, r) => s + r.missing.length, 0);
+  setProgress(1, 1, stopRequested
+    ? `Scan stopped. ${total404} missing emoji found so far.`
+    : `✅ Scan complete. ${total404} missing emoji found across ${selectedIds.length} style(s).`
+  );
+}
+
+function stopScan() {
+  stopRequested = true;
+  document.getElementById('btnStop').disabled = true;
+  setProgress(0, 0, 'Stopping after current batch…');
+}
+
+function clearResults() {
+  scanResults = {};
+  document.getElementById('summaryGrid').innerHTML = '';
+  document.getElementById('resultsContainer').innerHTML = '';
+  document.getElementById('btnExport').disabled = true;
+  document.getElementById('btnClear').style.display = 'none';
+  setProgress(0, 0, 'Select styles above and click Start Scan.');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ════════════════════════════════════════════════════════════════
+
+function setProgress(done, total, label) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = label;
+}
+
+function renderSummaryCard(styleId, styleMeta, missingCount, total) {
+  const id = 'sc_' + styleId;
+  let card = document.getElementById(id);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'summary-card';
+    card.id = id;
+    document.getElementById('summaryGrid').appendChild(card);
+  }
+
+  const inProgress = missingCount === null;
+  const pct  = inProgress ? '…' : missingCount;
+  const cls  = inProgress ? '' : missingCount === 0 ? 'ok' : missingCount < 20 ? 'warn' : 'bad';
+
+  card.innerHTML = `
+    <div class="sname">${styleMeta.icon} ${styleMeta.label}</div>
+    <div class="scount ${cls}">${pct} missing</div>
+    <div class="stotal">of ${total} emojis</div>
+  `;
+}
+
+function renderResultSection(styleId, styleMeta, missing) {
+  const container = document.getElementById('resultsContainer');
+
+  const section = document.createElement('div');
+  section.className = 'result-section';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'result-section-hdr';
+  hdr.innerHTML = `
+    <span>${styleMeta.icon} ${styleMeta.label}</span>
+    <span class="badge ${missing.length === 0 ? 'zero' : ''}">${missing.length} missing</span>
+  `;
+
+  const body = document.createElement('div');
+  body.className = 'result-body';
+
+  if (missing.length === 0) {
+    body.innerHTML = '<p class="no-missing">✅ All emojis present in primary source!</p>';
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'missing-grid';
+    for (const m of missing) {
+      const item = document.createElement('div');
+      item.className = 'missing-item';
+      item.title = m.url;
+      item.innerHTML = `
+        <span class="em">${m.char}</span>
+        <span class="hex">${m.hex.toLowerCase()}</span>
+      `;
+      grid.appendChild(item);
     }
-    empty.style.display = 'none';
-
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td class="emoji-cell">${r.emoji}</td>
-        <td>${escHtml(r.name)}</td>
-        <td style="font-family:monospace;color:var(--muted)">${r.hex}</td>
-        <td style="color:var(--muted)">${escHtml(r.category)}</td>
-        <td>
-          <div class="style-badges">
-            ${r.missing.map(s => `<span class="badge">${s}</span>`).join('')}
-          </div>
-        </td>
-      </tr>
-    `).join('');
+    body.appendChild(grid);
   }
 
-  function sortBy(key) {
-    if (sortKey === key) sortDir *= -1;
-    else { sortKey = key; sortDir = 1; }
-    renderTable();
-  }
+  // Toggle body on header click
+  hdr.addEventListener('click', () => {
+    body.classList.toggle('open');
+  });
+  // Auto-open if there are missing emojis
+  if (missing.length > 0) body.classList.add('open');
 
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
-  }
+  section.appendChild(hdr);
+  section.appendChild(body);
+  container.appendChild(section);
+}
 
-  // ────────────────────────────────────────────────────────────────────────
-  //  Export
-  // ────────────────────────────────────────────────────────────────────────
-  function exportJSON() {
-    const data = allResults.map(r => ({
-      emoji:    r.emoji,
-      name:     r.name,
-      hex:      r.hex,
-      category: r.category,
-      missing:  r.missing,
-    }));
-    download('emoji-404s.json', JSON.stringify(data, null, 2), 'application/json');
-    toast('Exported JSON');
-  }
 
-  function exportCSV() {
-    const rows = [['emoji','name','hex','category','missing_styles']];
-    allResults.forEach(r => rows.push([
-      r.emoji,
-      '"' + r.name.replace(/"/g, '""') + '"',
-      r.hex,
-      '"' + r.category.replace(/"/g, '""') + '"',
-      '"' + r.missing.join(',') + '"',
-    ]));
-    download('emoji-404s.csv', rows.map(r=>r.join(',')).join('\n'), 'text/csv');
-    toast('Exported CSV');
-  }
+// ════════════════════════════════════════════════════════════════
+//  EXPORT
+// ════════════════════════════════════════════════════════════════
 
-  function download(filename, content, mime) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([content], { type: mime }));
-    a.download = filename;
-    a.click();
+function exportResults() {
+  const out = {};
+  for (const [styleId, data] of Object.entries(scanResults)) {
+    out[styleId] = {
+      total:   data.total,
+      missing: data.missing.map(m => ({ emoji: m.char, hex: m.hex, url: m.url })),
+    };
   }
-
-  // ────────────────────────────────────────────────────────────────────────
-  //  Toast
-  // ────────────────────────────────────────────────────────────────────────
-  let toastTimer;
-  function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-  }
-  </script>
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `emoji-scan-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
 </body>
 </html>
