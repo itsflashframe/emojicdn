@@ -84,7 +84,7 @@ const RR_STYLE = {
   fluent3d:   'fluent',
   fluentflat: 'fluent',
   fluenthc:   'fluent',
-  tossface:   null,
+
 };
 
 const ELK_STYLE = {
@@ -99,7 +99,7 @@ const ELK_STYLE = {
   emojitwo:   null,
   opencolor:  null,
   openblack:  null,
-  tossface:   null,
+  
 };
 
 const SKIN_LABELS = {
@@ -199,7 +199,7 @@ module.exports = async (req, res) => {
     emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${resolvedHex}.png`,
     opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || resolvedHex.toUpperCase()}.svg`,
     openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || resolvedHex.toUpperCase()}.svg`,
-    tossface:  `https://cdn.jsdelivr.net/npm/@toss/tossface@1.7.0/dist/svg/u${resolvedNoFe.toUpperCase().replace(/-/g, '_')}.svg`,
+    
   }[style] || `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`;
 
   if (await proxyImage(primaryUrl, res)) return;
