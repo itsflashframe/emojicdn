@@ -1,10 +1,11 @@
 const emojiData     = require('emoji-datasource-apple/emoji.json');
+const fluentEmoji   = require('fluentui-emoji-js');
 const overrides     = require('./overrides');
 const sourceChanges = require('./sourcechange');
 
+
 const emojiMap     = {};
 const emojiMapNoFe = {};
-const hexToEntry   = {}; 
 
 emojiData.forEach(e => {
   if (e.char) {
@@ -12,11 +13,8 @@ emojiData.forEach(e => {
     emojiMap[e.char] = unified;
     emojiMapNoFe[e.char.replace(/\uFE0F/g, '')] = unified;
   }
-  if (e.unified) {
-    hexToEntry[e.unified.toLowerCase()] = e;
-    hexToEntry[e.unified.toLowerCase().replace(/-fe0f/g, '')] = e;
-  }
 });
+
 
 function resolveHex(emoji) {
   if (emojiMap[emoji])            return emojiMap[emoji];
@@ -30,9 +28,10 @@ function resolveHex(emoji) {
     .join('-');
 }
 
+
 async function proxyImage(url, res) {
   try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const r = await fetch(url);
     if (!r.ok) return false;
     const buf = await r.arrayBuffer();
     const ct  = r.headers.get('content-type') || 'image/png';
@@ -46,79 +45,79 @@ async function proxyImage(url, res) {
   }
 }
 
-async function tryUrls(urls, res) {
-  for (const url of urls) {
-    if (!url) continue;
-    const ok = await proxyImage(url, res);
-    if (ok) return true;
-  }
-  return false;
-}
 
 function lookupSourceChange(hex, style, emoji) {
   const hexNoFe = hex.replace(/-fe0f/g, '');
-  for (const key of [hex, hexNoFe, emoji].filter(Boolean)) {
+  const keysToTry = [hex, hexNoFe, emoji].filter(Boolean);
+
+  for (const key of keysToTry) {
     const entry = sourceChanges[key];
     if (!entry) continue;
     if (typeof entry === 'string') return entry;
     if (typeof entry === 'object') {
       const match = entry[style] ?? entry['*'];
       if (!match) continue;
-      return typeof match === 'function' ? match(hex) : match;
+      if (typeof match === 'function') return match(hex);
+      return match;
     }
   }
+
   return null;
 }
 
-function fluentName(hex) {
-  const entry = hexToEntry[hex] || hexToEntry[hex.replace(/-fe0f/g, '')];
-  if (!entry) return null;
-  const raw = (entry.name || entry.short_name || '').toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
-  return raw || null;
-}
 
-function fluentUrls(hex, folder) {
-  const hexNoFe = hex.replace(/-fe0f/g, '');
-  const name    = fluentName(hex);
-  const urls    = [];
-  const base    = `https:
-
-  if (name) {
-    urls.push(`${base}/${name}.svg`);
-    if (name.includes('-face')) urls.push(`${base}/${name.replace('-face', '')}.svg`);
-    if (!name.includes('-face') && name.includes('-')) {
-      const parts = name.split('-');
-      urls.push(`${base}/${parts[parts.length - 1]}.svg`);
-    }
-  }
-
-  if (name) {
-    const ghFolder = { modern: '3D', flat: 'Flat', 'high-contrast': 'High Contrast' }[folder];
-    const titleName = name.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
-    const fileBase  = name.replace(/-/g, '_');
-    urls.push(`https:
-    urls.push(`https:
-  }
-
-  urls.push(`https:
-
-  return urls;
+function elkFallbackUrl(emoji, elkStyle) {
+  return `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=${elkStyle}`;
 }
 
 
-function buildFallbackUrls(style, resolvedHex, resolvedNoFe, ov) {
-  const rrHex   = resolvedNoFe.replace(/-/g, '_');
-  const elkStyle = { apple:'apple', google:'google', facebook:'facebook', twitter:'twitter',
-                     messenger:'messenger' }[style] || null;
-  const elk      = elkStyle ? `https:
-  const rr       = `https:
-  const noto     = `https:
-
-  return { elk, rr, noto, elkStyle };
+function realityRippleUrl(hexNoFe, rrStyle) {
+  return `https://realityripple.com/Tools/Articles/Emoji/img/${rrStyle}/${hexNoFe}.png`;
 }
+
+
+const RR_STYLE = {
+  apple:      'apple',
+  google:     'google',
+  facebook:   'facebook',
+  twitter:    'twitter',
+  messenger:  'messenger',
+  blobmoji:   'blob',
+  oneui:      'samsung',
+  whatsapp:   'whatsapp',
+  emojitwo:   'emojione',
+  opencolor:  'openmoji',
+  openblack:  'openmoji',
+  fluent3d:   'fluent',
+  fluentflat: 'fluent',
+  fluenthc:   'fluent',
+};
+
+
+const ELK_STYLE = {
+  apple:      'apple',
+  google:     'google',
+  facebook:   'facebook',
+  twitter:    'twitter',
+  messenger:  'messenger',
+  whatsapp:   'whatsapp',
+  blobmoji:   null,
+  oneui:      null,
+  emojitwo:   null,
+  opencolor:  null,
+  openblack:  null,
+};
+
+
+const SKIN_LABELS = {
+  '1f3fb': 'light',
+  '1f3fc': 'medium-light',
+  '1f3fd': 'medium',
+  '1f3fe': 'medium-dark',
+  '1f3ff': 'dark',
+};
+
+
 
 
 module.exports = async (req, res) => {
@@ -131,79 +130,117 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=31536000, stale-while-revalidate');
 
-  const hexWithFe0f  = resolveHex(emoji);
-  const hexNoFe0f    = hexWithFe0f.replace(/-fe0f/g, '');
-  const ov           = overrides[emoji] || overrides[emoji.replace(/\uFE0F/g, '')];
+  const hexWithFe0f = resolveHex(emoji);
+  const hexNoFe0f   = hexWithFe0f.replace(/-fe0f/g, '');
 
+  
   const customUrl = lookupSourceChange(hexWithFe0f, style, emoji);
   if (customUrl) {
     const ok = await proxyImage(customUrl, res);
     if (ok) return;
+   
   }
 
-  if (['fluent3d', 'fluentflat', 'fluenthc'].includes(style)) {
-    const folder = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
 
+ 
+  if (['fluent3d', 'fluentflat', 'fluenthc'].includes(style)) {
+    const folder      = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
+    const fluentStyle = { fluent3d: '3D',     fluentflat: 'Flat', fluenthc: 'High Contrast' }[style];
+    const NPM_BASE    = `https://cdn.jsdelivr.net/npm/fluentui-emoji@1.3.0/icons/${folder}`;
+    const GH_BASE     = `https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets`;
+    const ov          = overrides[emoji];
+
+  
     if (ov?.[style]) {
-      const base = `https:
-      const ok   = await proxyImage(`${base}/${ov[style]}.svg`, res);
-      if (ok) return;
+      if (await proxyImage(`${NPM_BASE}/${ov[style]}.svg`, res)) return;
     }
 
-    const fluentCandidates = fluentUrls(hexWithFe0f, folder);
-    const ok = await tryUrls(fluentCandidates, res);
-    if (ok) return;
 
-    const rrHex = hexNoFe0f.replace(/-/g, '_');
-    const ok2 = await tryUrls([
-      `https:
-      `https:
-    ], res);
-    if (ok2) return;
+    const skinStripped = hexNoFe0f.replace(/-1f3f[b-f]$/g, '');
+    const baseOnly     = hexNoFe0f.split('-')[0];
+    const hexVariants  = [...new Set([hexNoFe0f, skinStripped, baseOnly])];
+
+    for (const h of hexVariants) {
+      try {
+        const filePath  = await fluentEmoji.fromCode(h, fluentStyle);
+     
+        const parts      = filePath.split('/').filter(Boolean);
+        const rawName    = parts[0];                                          
+        const fileName   = parts[parts.length - 1];                          
+        const kebabName  = rawName.toLowerCase().replace(/\s+/g, '-');       
+
+     
+        if (await proxyImage(`${NPM_BASE}/${kebabName}.svg`, res)) return;
+
+        
+        const ghPath = parts.slice(0, -1).map(encodeURIComponent).join('/');
+        if (await proxyImage(`${GH_BASE}/${ghPath}/${encodeURIComponent(fileName)}`, res)) return;
+
+        
+        if (h !== hexNoFe0f) {
+          const skinMatch = hexNoFe0f.match(/-(1f3f[b-f])$/);
+          if (skinMatch) {
+            const skinLabel = SKIN_LABELS[skinMatch[1]];
+            if (skinLabel) {
+              if (await proxyImage(`${NPM_BASE}/${kebabName}-${skinLabel}.svg`, res)) return;
+             
+              const skinFile = `${rawName.toLowerCase().replace(/\s+/g, '_')}_${skinLabel.replace('-', '_')}_${fluentStyle.toLowerCase().replace(/\s+/g, '_')}.svg`;
+              if (await proxyImage(`${GH_BASE}/${encodeURIComponent(rawName)}/${encodeURIComponent(fluentStyle)}/Color/${skinFile}`, res)) return;
+            }
+          }
+        }
+
+       
+        const fileOnNpm = fileName.replace(/_/g, '-');
+        if (fileOnNpm !== `${kebabName}.svg`) {
+          if (await proxyImage(`${NPM_BASE}/${fileOnNpm}`, res)) return;
+        }
+
+      } catch (_) {
+        
+      }
+    }
+
+    
+    if (await proxyImage(realityRippleUrl(hexNoFe0f, 'fluent'), res)) return;
 
     return res.status(404).send(`Fluent emoji not found: ${hexNoFe0f}`);
   }
 
+
+
+  const ov          = overrides[emoji];
   const resolvedHex  = ov?.[style] || hexWithFe0f;
   const resolvedNoFe = resolvedHex.replace(/-fe0f/g, '');
-  const { rr, noto, elkStyle } = buildFallbackUrls(style, resolvedHex, resolvedNoFe, ov);
-  const rrHex = resolvedNoFe.replace(/-/g, '_');
 
-  const primary = {
-    apple:     `https:
-    google:    `https:
-    facebook:  `https:
-    twitter:   `https:
-    messenger: `https:
-    blobmoji:  `https:
-    oneui:     `https:
-    whatsapp:  `https:
-    emojitwo:  `https:
-    opencolor: `https:
-    openblack: `https:
-  };
+  const primaryUrl = {
+    apple:     `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@latest/img/apple/64/${resolvedHex}.png`,
+    google:    `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`,
+    facebook:  `https://cdn.jsdelivr.net/npm/emoji-datasource-facebook@latest/img/facebook/64/${resolvedHex}.png`,
+    twitter:   `https://cdn.jsdelivr.net/npm/emoji-datasource-twitter@latest/img/twitter/64/${resolvedHex}.png`,
+    messenger: `https://cdn.jsdelivr.net/npm/emoji-datasource-messenger@4.1.0/img/messenger/64/${resolvedHex}.png`,
+    blobmoji:  `https://cdn.jsdelivr.net/gh/DavidBerdik/blobmoji2@blobmoji-master/svg/${ov?.blobmoji || 'emoji_u' + resolvedNoFe.replace(/-/g, '_')}.svg`,
+    oneui:     `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/oneui/${resolvedNoFe}.png`,
+    whatsapp:  `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/whatsapp/${resolvedNoFe}.png`,
+    emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${resolvedNoFe}.png`,
+    opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || resolvedHex.toUpperCase()}.svg`,
+    openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || resolvedHex.toUpperCase()}.svg`,
+  }[style] || `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`;
 
-  const tier2 = {
-    apple:     elkStyle ? `https:
-    google:    elkStyle ? `https:
-    facebook:  elkStyle ? `https:
-    twitter:   elkStyle ? `https:
-    messenger: elkStyle ? `https:
-    blobmoji:  `https:
-    oneui:     null, 
-    whatsapp:  null,
-    emojitwo:  `https:
-    opencolor: `https:
-    openblack: `https:
-  };
+  
+  if (await proxyImage(primaryUrl, res)) return;
 
-  const chain = [
-    primary[style] || primary.google,
-    tier2[style],
-    `https:
-    `https:
-  ].filter(Boolean);
+ 
+  const elkStyle = ELK_STYLE[style];
+  if (elkStyle) {
+    if (await proxyImage(elkFallbackUrl(emoji, elkStyle), res)) return;
+  }
 
-  const ok = await tryUrls(chain, res);
-  if (!ok) return res.status(404).send(`Emoji not found: ${resolvedHex}`);
+
+  const rrStyle = RR_STYLE[style];
+  if (rrStyle) {
+    if (await proxyImage(realityRippleUrl(resolvedNoFe, rrStyle), res)) return;
+  }
+
+  return res.status(404).send(`Emoji not found: ${resolvedHex}`);
 };
