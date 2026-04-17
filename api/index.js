@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
   if (['fluent3d', 'fluentflat', 'fluenthc'].includes(style)) {
     const folder      = { fluent3d: 'modern', fluentflat: 'flat', fluenthc: 'high-contrast' }[style];
     const fluentStyle = { fluent3d: '3D',     fluentflat: 'Flat', fluenthc: 'High Contrast' }[style];
-    const NPM_BASE    = `https://cdn.jsdelivr.net/npm/fluentui-emoji@1.3.0/icons/${folder}`;
+    const NPM_BASE    = `https://cdn.jsdelivr.net/npm/fluentui-emoji@latest/icons/${folder}`;
     const GH_BASE     = `https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets`;
     const ov          = overrides[emoji];
 
@@ -145,37 +145,49 @@ module.exports = async (req, res) => {
     const baseOnly     = hexNoFe0f.split('-')[0];
     const hexVariants  = [...new Set([hexNoFe0f, skinStripped, baseOnly])];
 
+    // fluentui-emoji-js stores the same `unicode` for every skin row (e.g. all 👍 variants are "1f44d"),
+    // so fromCode() always resolves to Default. fromGlyph(emoji) matches the real grapheme (👍🏾, etc.).
+    // Also, 3D/Flat paths use /Default/, /Light/, … not "/Color/", so never gate skin logic on /Color/.
+    async function tryFluentFilePath(filePath) {
+      if (!filePath || typeof filePath !== 'string') return false;
+      const parts     = filePath.split('/').filter(Boolean);
+      const rawName   = parts[0];
+      const fileName  = parts[parts.length - 1];
+      const kebabName = rawName.toLowerCase().replace(/\s+/g, '-');
+      const ghPath    = parts.slice(0, -1).map(encodeURIComponent).join('/');
+
+      if (await proxyImage(`${GH_BASE}/${ghPath}/${encodeURIComponent(fileName)}`, res)) return true;
+
+      if (skinMatch) {
+        const skinLabel = SKIN_LABELS[skinMatch[1]];
+        if (skinLabel) {
+          if (await proxyImage(`${NPM_BASE}/${kebabName}-${skinLabel}.svg`, res)) return true;
+          const skinFile = `${rawName.toLowerCase().replace(/\s+/g, '_')}_${skinLabel.replace('-', '_')}_${fluentStyle.toLowerCase().replace(/\s+/g, '_')}.svg`;
+          if (await proxyImage(`${GH_BASE}/${encodeURIComponent(rawName)}/${encodeURIComponent(fluentStyle)}/Color/${skinFile}`, res)) return true;
+        }
+      }
+
+      if (await proxyImage(`${NPM_BASE}/${kebabName}.svg`, res)) return true;
+
+      const fileOnNpm = fileName.replace(/_/g, '-');
+      if (fileOnNpm !== `${kebabName}.svg`) {
+        if (await proxyImage(`${NPM_BASE}/${fileOnNpm}`, res)) return true;
+      }
+
+      return false;
+    }
+
+    try {
+      if (typeof fluentEmoji.fromGlyph === 'function') {
+        const byGlyph = await fluentEmoji.fromGlyph(emoji, fluentStyle);
+        if (await tryFluentFilePath(byGlyph)) return;
+      }
+    } catch (_) {}
+
     for (const h of hexVariants) {
       try {
         const filePath = await fluentEmoji.fromCode(h, fluentStyle);
-        const parts    = filePath.split('/').filter(Boolean);
-        const rawName  = parts[0];
-        const fileName = parts[parts.length - 1];
-        const kebabName = rawName.toLowerCase().replace(/\s+/g, '-');
-
-        const hasSkinTone = filePath.includes('/Color/');
-
-        if (!hasSkinTone) {
-          if (await proxyImage(`${NPM_BASE}/${kebabName}.svg`, res)) return;
-        }
-
-        const ghPath = parts.slice(0, -1).map(encodeURIComponent).join('/');
-        if (await proxyImage(`${GH_BASE}/${ghPath}/${encodeURIComponent(fileName)}`, res)) return;
-
-        if (hasSkinTone && skinMatch) {
-          const skinLabel = SKIN_LABELS[skinMatch[1]];
-          if (skinLabel) {
-            if (await proxyImage(`${NPM_BASE}/${kebabName}-${skinLabel}.svg`, res)) return;
-            const skinFile = `${rawName.toLowerCase().replace(/\s+/g, '_')}_${skinLabel.replace('-', '_')}_${fluentStyle.toLowerCase().replace(/\s+/g, '_')}.svg`;
-            if (await proxyImage(`${GH_BASE}/${encodeURIComponent(rawName)}/${encodeURIComponent(fluentStyle)}/Color/${skinFile}`, res)) return;
-          }
-        }
-
-        const fileOnNpm = fileName.replace(/_/g, '-');
-        if (fileOnNpm !== `${kebabName}.svg`) {
-          if (await proxyImage(`${NPM_BASE}/${fileOnNpm}`, res)) return;
-        }
-
+        if (await tryFluentFilePath(filePath)) return;
       } catch (_) {}
     }
 
