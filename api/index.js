@@ -84,7 +84,7 @@ const RR_STYLE = {
   fluent3d:   'fluent',
   fluentflat: 'fluent',
   fluenthc:   'fluent',
-
+  tossface:   null,
 };
 
 const ELK_STYLE = {
@@ -99,7 +99,7 @@ const ELK_STYLE = {
   emojitwo:   null,
   opencolor:  null,
   openblack:  null,
-  
+  tossface:   null,
 };
 
 const SKIN_LABELS = {
@@ -145,9 +145,7 @@ module.exports = async (req, res) => {
     const baseOnly     = hexNoFe0f.split('-')[0];
     const hexVariants  = [...new Set([hexNoFe0f, skinStripped, baseOnly])];
 
-    // fluentui-emoji-js stores the same `unicode` for every skin row (e.g. all 👍 variants are "1f44d"),
-    // so fromCode() always resolves to Default. fromGlyph(emoji) matches the real grapheme (👍🏾, etc.).
-    // Also, 3D/Flat paths use /Default/, /Light/, … not "/Color/", so never gate skin logic on /Color/.
+    
     async function tryFluentFilePath(filePath) {
       if (!filePath || typeof filePath !== 'string') return false;
       const parts     = filePath.split('/').filter(Boolean);
@@ -211,7 +209,7 @@ module.exports = async (req, res) => {
     emojitwo:  `https://cdn.jsdelivr.net/gh/EmojiTwo/emojitwo@master/png/128/${resolvedHex}.png`,
     opencolor: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/color/svg/${ov?.opencolor || resolvedHex.toUpperCase()}.svg`,
     openblack: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@master/black/svg/${ov?.openblack || resolvedHex.toUpperCase()}.svg`,
-    
+    tossface:  `https://cdn.jsdelivr.net/gh/itsflashframe/emojifonts@main/TossFace-Svg-v1-6/${resolvedNoFe.split('-').map(p => 'u' + p.toUpperCase()).join('_')}.svg`,
   }[style] || `https://cdn.jsdelivr.net/npm/emoji-datasource-google@latest/img/google/64/${resolvedHex}.png`;
 
   if (await proxyImage(primaryUrl, res)) return;
